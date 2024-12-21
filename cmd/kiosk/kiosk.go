@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -80,8 +81,27 @@ func run(ctx context.Context) error {
 		middleware.Recoverer,
 		httputils.ChiLogger(logger),
 	)
-	r.Mount("/", http.HandlerFunc(apiInstance.PostUser))
-	r.Mount("/{userid}", http.HandlerFunc(apiInstance.GetUser))
+
+	r.Get("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
+		healthy := map[string]string{
+			"status": "healthy",
+		}
+		jsonData, err := json.Marshal(healthy)
+		if err != nil {
+			http.Error(w, "error encoding json", http.StatusInternalServerError)
+			return
+		}
+	
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(jsonData)
+	})
+	
+	r.Route("/users", func(r chi.Router) {
+		r.Post("/", apiInstance.PostUser)
+		r.Get("/{userId}", apiInstance.GetUser)
+	})
+	
 
 	srv := http.Server{
 		Addr: ":8080",
@@ -109,6 +129,7 @@ func run(ctx context.Context) error {
 		if err := srv.ListenAndServe(); err != nil {
 			errChan <- err
 		}
+		logger.Info("Starting server at port 8080...")
 	} ()
 
 	select {

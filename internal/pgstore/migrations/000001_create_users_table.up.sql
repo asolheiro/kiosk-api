@@ -4,7 +4,3 @@ CREATE TABLE IF NOT EXISTS users (
     email       VARCHAR(255) NOT NULL UNIQUE,
     password    VARCHAR(255) NOT NULL
 );
-
----- create above / drop below ----
-
-DROP TABLE IF EXISTS users;

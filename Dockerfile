@@ -5,11 +5,12 @@ WORKDIR /app
 
 COPY ./ .
 
-RUN go mod download && go mod verify
-
+RUN go mod download &&\
+    go mod verify 
+    
 RUN go build -o ./bin/kiosk ./cmd/kiosk/kiosk.go
 
-## Stage: RUN
+## Stage: Run
 FROM scratch
 
 WORKDIR /app

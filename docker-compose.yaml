@@ -18,5 +18,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl", "-f", "http://localhost:8080/healthcheck"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
     env_file:
       - .env
