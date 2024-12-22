@@ -57,3 +57,72 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 	)
 	return i, err
 }
+
+const listUsers = `-- name: ListUsers :many
+SELECT
+    id, full_name, email, password
+FROM 
+    users
+ORDER BY
+    full_name
+`
+
+func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.FullName,
+			&i.Email,
+			&i.Password,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE USERS
+set 
+    full_name = $2,
+    email = $3,
+    password = $4
+WHERE 
+    id = $1
+RETURNING id, full_name, email, password
+`
+
+type UpdateUserParams struct {
+	ID       uuid.UUID `db:"id" json:"id"`
+	FullName string    `db:"full_name" json:"full_name"`
+	Email    string    `db:"email" json:"email"`
+	Password string    `db:"password" json:"password"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.ID,
+		arg.FullName,
+		arg.Email,
+		arg.Password,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.Password,
+	)
+	return i, err
+}

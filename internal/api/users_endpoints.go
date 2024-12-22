@@ -37,12 +37,10 @@ func (api API) PostUser(w http.ResponseWriter, r *http.Request) {
 // (GET /users/{userId})
 func (api API) GetUser(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "userId")
-	fmt.Printf("Extracted userId: %s\n", stringId)
-	
 	stringId = strings.TrimSpace(stringId)
 	userId, err := uuid.Parse(stringId)
 	if err != nil {
-		http.Error(w, "invalid userId format", http.StatusBadRequest)
+		http.Error(w, "invalid userId", http.StatusBadRequest)
 		return
 	}
 
@@ -57,5 +55,63 @@ func (api API) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(user); err != nil {
 		http.Error(w, "error encoding response", http.StatusInternalServerError)
+		return
+	}
+}
+
+// List users
+// (GET /users
+func (api API) ListUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := api.repo.ListUsers(r.Context())
+	if err != nil {
+		http.Error(w, "error finding users", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(users); err != nil {
+		http.Error(w, "error encoding response", http.StatusInternalServerError)
+		return 
+	}
+}
+
+
+// Update an user
+// (PUT /users/{userId})
+func (api API) PutUser( w http.ResponseWriter, r *http.Request) {
+	stringId := chi.URLParam(r, "userId")
+	stringId = strings.TrimSpace(stringId)
+	userId, err := uuid.Parse(stringId)
+	if err != nil {
+		http.Error(w, "invalid userId", http.StatusBadRequest)
+		return
+	}
+
+	_, err = api.repo.GetUser(r.Context(), userId)
+	if err != nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	var body pgstore.UpdateUserParams
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "error deconding workload", http.StatusBadRequest)
+	}
+	
+
+	user, err := api.repo.UpdateUser(r.Context(), body)
+	if err != nil {
+		fmt.Println("err: ", err)
+		http.Error(w, "error updating user", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(user); err != nil {
+		http.Error(w, "error encoding response", http.StatusInternalServerError)
+		return
 	}
 }

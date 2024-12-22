@@ -99,7 +99,9 @@ func run(ctx context.Context) error {
 	
 	r.Route("/users", func(r chi.Router) {
 		r.Post("/", apiInstance.PostUser)
+		r.Get("/", apiInstance.ListUsers)
 		r.Get("/{userId}", apiInstance.GetUser)
+		r.Put("/{userId}", apiInstance.PutUser)
 	})
 	
 
