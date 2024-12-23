@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/asolheiro/kiosk-api/internal/api"
+	"github.com/asolheiro/kiosk-api/internal/utils"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -82,28 +82,11 @@ func run(ctx context.Context) error {
 		httputils.ChiLogger(logger),
 	)
 
-	r.Get("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
-		healthy := map[string]string{
-			"status": "healthy",
-		}
-		jsonData, err := json.Marshal(healthy)
-		if err != nil {
-			http.Error(w, "error encoding json", http.StatusInternalServerError)
-			return
-		}
-	
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(jsonData)
+	r.Route("/", func(r chi.Router) {
+		r.Get("/healthcheck", utils.HealthCheck)
 	})
-	
-	r.Route("/users", func(r chi.Router) {
-		r.Post("/", apiInstance.PostUser)
-		r.Get("/", apiInstance.ListUsers)
-		r.Get("/{userId}", apiInstance.GetUser)
-		r.Put("/{userId}", apiInstance.PutUser)
-	})
-	
+
+	utils.UsersRouter(r, apiInstance)
 
 	srv := http.Server{
 		Addr: ":8080",

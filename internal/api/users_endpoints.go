@@ -84,6 +84,7 @@ func (api API) PutUser( w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "userId")
 	stringId = strings.TrimSpace(stringId)
 	userId, err := uuid.Parse(stringId)
+	
 	if err != nil {
 		http.Error(w, "invalid userId", http.StatusBadRequest)
 		return
@@ -99,7 +100,7 @@ func (api API) PutUser( w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "error deconding workload", http.StatusBadRequest)
 	}
-	
+	body.ID = userId
 
 	user, err := api.repo.UpdateUser(r.Context(), body)
 	if err != nil {
