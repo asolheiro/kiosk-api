@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -104,7 +103,6 @@ func (api API) PutUser( w http.ResponseWriter, r *http.Request) {
 
 	user, err := api.repo.UpdateUser(r.Context(), body)
 	if err != nil {
-		fmt.Println("err: ", err)
 		http.Error(w, "error updating user", http.StatusNotFound)
 		return
 	}
@@ -115,4 +113,26 @@ func (api API) PutUser( w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error encoding response", http.StatusInternalServerError)
 		return
 	}
+}
+
+// Soft Delete an user
+// (DELETE /users/{userId})
+func (api API) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	stringId := chi.URLParam(r, "userId")
+	stringId = strings.TrimSpace(stringId)
+	
+	userId, err := uuid.Parse(stringId)
+	if err != nil {
+		http.Error(w, "invalid userId", http.StatusBadRequest)
+		return
+	}
+
+	err = api.repo.SoftDeleteUser(r.Context(), userId)
+	if err != nil {
+		http.Error(w, "error deleting user", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
 }

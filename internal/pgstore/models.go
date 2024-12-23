@@ -6,11 +6,25 @@ package pgstore
 
 import (
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Event struct {
+	ID           uuid.UUID        `db:"id" json:"id"`
+	Name         string           `db:"name" json:"name"`
+	PrimaryColor string           `db:"primary_color" json:"primary_color"`
+	Logo         string           `db:"logo" json:"logo"`
+	CreatedAt    pgtype.Timestamp `db:"created_at" json:"created_at"`
+	UpdatedAt    pgtype.Timestamp `db:"updated_at" json:"updated_at"`
+	DeletedAt    pgtype.Timestamp `db:"deleted_at" json:"deleted_at"`
+}
+
 type User struct {
-	ID       uuid.UUID `db:"id" json:"id"`
-	FullName string    `db:"full_name" json:"full_name"`
-	Email    string    `db:"email" json:"email"`
-	Password string    `db:"password" json:"password"`
+	ID        uuid.UUID        `db:"id" json:"id"`
+	FullName  string           `db:"full_name" json:"full_name"`
+	Email     string           `db:"email" json:"email"`
+	Password  string           `db:"password" json:"password"`
+	CreatedAt pgtype.Timestamp `db:"created_at" json:"created_at"`
+	UpdatedAt pgtype.Timestamp `db:"updated_at" json:"updated_at"`
+	DeletedAt pgtype.Timestamp `db:"deleted_at" json:"deleted_at"`
 }
