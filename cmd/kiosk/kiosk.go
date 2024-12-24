@@ -87,6 +87,7 @@ func run(ctx context.Context) error {
 	})
 
 	utils.UsersRouter(r, apiInstance)
+	utils.EventsRouter(r, apiInstance)
 
 	srv := http.Server{
 		Addr: ":8080",

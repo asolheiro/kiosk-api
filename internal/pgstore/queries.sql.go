@@ -75,7 +75,7 @@ const getEvent = `-- name: GetEvent :one
 SELECT 
     id, name, primary_color, logo, created_at, updated_at, deleted_at 
 FROM events
-WHERE id = $1
+WHERE id = $1 AND deleted_at IS NULL
 LIMIT 1
 `
 
@@ -99,7 +99,7 @@ const getUser = `-- name: GetUser :one
 SELECT 
     id, full_name, email, password, created_at, updated_at, deleted_at 
 FROM users
-WHERE id = $1
+WHERE id = $1 AND deleted_at IS NULL
 LIMIT 1
 `
 
@@ -124,6 +124,7 @@ SELECT
     id, name, primary_color, logo, created_at, updated_at, deleted_at
 FROM 
     events
+WHERE deleted_at IS NULL
 ORDER BY
     name
 `
@@ -161,6 +162,7 @@ SELECT
     id, full_name, email, password, created_at, updated_at, deleted_at
 FROM 
     users
+WHERE deleted_at IS NULL
 ORDER BY
     full_name
 `

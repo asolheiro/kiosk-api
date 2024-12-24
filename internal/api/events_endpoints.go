@@ -129,7 +129,7 @@ func (api API) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = api.repo.SoftDeleteUser(r.Context(), eventId)
+	err = api.repo.SoftDeleteEvent(r.Context(), eventId)
 	if err != nil {
 		http.Error(w, "error deleting event", http.StatusNotFound)
 		return

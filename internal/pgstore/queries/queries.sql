@@ -3,7 +3,7 @@
 SELECT 
     * 
 FROM users
-WHERE id = $1
+WHERE id = $1 AND deleted_at IS NULL
 LIMIT 1;
 
 -- name: ListUsers :many
@@ -11,6 +11,7 @@ SELECT
     *
 FROM 
     users
+WHERE deleted_at IS NULL
 ORDER BY
     full_name;
 
@@ -43,7 +44,7 @@ WHERE id = $1 AND deleted_at IS NULL;
 SELECT 
     * 
 FROM events
-WHERE id = $1
+WHERE id = $1 AND deleted_at IS NULL
 LIMIT 1;
 
 -- name: ListEvents :many
@@ -51,6 +52,7 @@ SELECT
     *
 FROM 
     events
+WHERE deleted_at IS NULL
 ORDER BY
     name;
 
