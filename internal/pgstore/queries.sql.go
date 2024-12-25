@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createEvent = `-- name: CreateEvent :one
@@ -34,6 +35,49 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 		&i.Name,
 		&i.PrimaryColor,
 		&i.Logo,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const createGuest = `-- name: CreateGuest :one
+INSERT INTO guests (
+    full_name, email, document_number, occupation, profile_picture, event_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6
+) RETURNING id, full_name, email, document_number, occupation, profile_picture, event_id, created_at, updated_at, deleted_at
+`
+
+type CreateGuestParams struct {
+	FullName       string      `db:"full_name" json:"full_name"`
+	Email          pgtype.Text `db:"email" json:"email"`
+	DocumentNumber string      `db:"document_number" json:"document_number"`
+	Occupation     pgtype.Text `db:"occupation" json:"occupation"`
+	ProfilePicture pgtype.Text `db:"profile_picture" json:"profile_picture"`
+	EventID        uuid.UUID   `db:"event_id" json:"event_id"`
+}
+
+// - GUESTS ---
+func (q *Queries) CreateGuest(ctx context.Context, arg CreateGuestParams) (Guest, error) {
+	row := q.db.QueryRow(ctx, createGuest,
+		arg.FullName,
+		arg.Email,
+		arg.DocumentNumber,
+		arg.Occupation,
+		arg.ProfilePicture,
+		arg.EventID,
+	)
+	var i Guest
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.DocumentNumber,
+		&i.Occupation,
+		&i.ProfilePicture,
+		&i.EventID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -74,9 +118,12 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 const getEvent = `-- name: GetEvent :one
 SELECT 
     id, name, primary_color, logo, created_at, updated_at, deleted_at 
-FROM events
-WHERE id = $1 AND deleted_at IS NULL
-LIMIT 1
+FROM 
+    events
+WHERE 
+    id = $1 AND deleted_at IS NULL
+LIMIT 
+    1
 `
 
 // - EVENTS ---
@@ -88,6 +135,64 @@ func (q *Queries) GetEvent(ctx context.Context, id uuid.UUID) (Event, error) {
 		&i.Name,
 		&i.PrimaryColor,
 		&i.Logo,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getGuest = `-- name: GetGuest :one
+SELECT 
+    id, full_name, email, document_number, occupation, profile_picture, event_id, created_at, updated_at, deleted_at
+FROM 
+    guests
+WHERE 
+    id = $1 AND deleted_at IS NULL
+LIMIT 
+    1
+`
+
+func (q *Queries) GetGuest(ctx context.Context, id uuid.UUID) (Guest, error) {
+	row := q.db.QueryRow(ctx, getGuest, id)
+	var i Guest
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.DocumentNumber,
+		&i.Occupation,
+		&i.ProfilePicture,
+		&i.EventID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getGuestByDocumentNumber = `-- name: GetGuestByDocumentNumber :one
+SELECT 
+    id, full_name, email, document_number, occupation, profile_picture, event_id, created_at, updated_at, deleted_at
+FROM 
+    guests
+WHERE 
+    document_number = $1 AND deleted_at IS NULL
+LIMIT 
+    1
+`
+
+func (q *Queries) GetGuestByDocumentNumber(ctx context.Context, documentNumber string) (Guest, error) {
+	row := q.db.QueryRow(ctx, getGuestByDocumentNumber, documentNumber)
+	var i Guest
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.DocumentNumber,
+		&i.Occupation,
+		&i.ProfilePicture,
+		&i.EventID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -157,6 +262,48 @@ func (q *Queries) ListEvents(ctx context.Context) ([]Event, error) {
 	return items, nil
 }
 
+const listGuests = `-- name: ListGuests :many
+SELECT 
+    id, full_name, email, document_number, occupation, profile_picture, event_id, created_at, updated_at, deleted_at
+FROM
+    guests
+WHERE
+    deleted_at IS NULL
+ORDER BY 
+    full_name
+`
+
+func (q *Queries) ListGuests(ctx context.Context) ([]Guest, error) {
+	rows, err := q.db.Query(ctx, listGuests)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Guest
+	for rows.Next() {
+		var i Guest
+		if err := rows.Scan(
+			&i.ID,
+			&i.FullName,
+			&i.Email,
+			&i.DocumentNumber,
+			&i.Occupation,
+			&i.ProfilePicture,
+			&i.EventID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUsers = `-- name: ListUsers :many
 SELECT
     id, full_name, email, password, created_at, updated_at, deleted_at
@@ -206,6 +353,20 @@ func (q *Queries) SoftDeleteEvent(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const softDeleteGuest = `-- name: SoftDeleteGuest :exec
+UPDATE
+    guests
+SET
+    deleted_at = NOW()
+WHERE 
+    id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) SoftDeleteGuest(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteGuest, id)
+	return err
+}
+
 const softDeleteUser = `-- name: SoftDeleteUser :exec
 UPDATE users
 SET deleted_at = NOW()
@@ -249,6 +410,58 @@ func (q *Queries) UpdateEvent(ctx context.Context, arg UpdateEventParams) (Event
 		&i.Name,
 		&i.PrimaryColor,
 		&i.Logo,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const updateGuest = `-- name: UpdateGuest :one
+UPDATE 
+    guests
+SET 
+    full_name = $2,
+    email = $3,
+    occupation = $4,
+    profile_picture = $5,
+    document_number = $6,
+    event_id = $7,
+    updated_at = CURRENT_TIMESTAMP
+WHERE 
+    id = $1
+RETURNING id, full_name, email, document_number, occupation, profile_picture, event_id, created_at, updated_at, deleted_at
+`
+
+type UpdateGuestParams struct {
+	ID             uuid.UUID   `db:"id" json:"id"`
+	FullName       string      `db:"full_name" json:"full_name"`
+	Email          pgtype.Text `db:"email" json:"email"`
+	Occupation     pgtype.Text `db:"occupation" json:"occupation"`
+	ProfilePicture pgtype.Text `db:"profile_picture" json:"profile_picture"`
+	DocumentNumber string      `db:"document_number" json:"document_number"`
+	EventID        uuid.UUID   `db:"event_id" json:"event_id"`
+}
+
+func (q *Queries) UpdateGuest(ctx context.Context, arg UpdateGuestParams) (Guest, error) {
+	row := q.db.QueryRow(ctx, updateGuest,
+		arg.ID,
+		arg.FullName,
+		arg.Email,
+		arg.Occupation,
+		arg.ProfilePicture,
+		arg.DocumentNumber,
+		arg.EventID,
+	)
+	var i Guest
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.DocumentNumber,
+		&i.Occupation,
+		&i.ProfilePicture,
+		&i.EventID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

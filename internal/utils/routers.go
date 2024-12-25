@@ -26,3 +26,14 @@ func EventsRouter(r chi.Router, api api.API) {
 		r.Delete("/{eventId}", api.DeleteEvent)
 	})
 }
+
+func GuestsRouter(r chi.Router, api api.API) {
+	r.Route("/guest", func(r chi.Router) {
+		r.Post("/", api.PostGuest)
+		r.Get("/", api.ListGuests)
+		r.Get("/{guestId}", api.GetGuest)
+		r.Get("/{documentNumber}/document", api.GetGuestByDocument)
+		r.Put("/{guestId}", api.PutGuest)
+		r.Delete("/{guestId}", api.DeleteGuest)
+	})
+}

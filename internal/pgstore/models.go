@@ -19,6 +19,19 @@ type Event struct {
 	DeletedAt    pgtype.Timestamp `db:"deleted_at" json:"deleted_at"`
 }
 
+type Guest struct {
+	ID             uuid.UUID        `db:"id" json:"id"`
+	FullName       string           `db:"full_name" json:"full_name"`
+	Email          pgtype.Text      `db:"email" json:"email"`
+	DocumentNumber string           `db:"document_number" json:"document_number"`
+	Occupation     pgtype.Text      `db:"occupation" json:"occupation"`
+	ProfilePicture pgtype.Text      `db:"profile_picture" json:"profile_picture"`
+	EventID        uuid.UUID        `db:"event_id" json:"event_id"`
+	CreatedAt      pgtype.Timestamp `db:"created_at" json:"created_at"`
+	UpdatedAt      pgtype.Timestamp `db:"updated_at" json:"updated_at"`
+	DeletedAt      pgtype.Timestamp `db:"deleted_at" json:"deleted_at"`
+}
+
 type User struct {
 	ID        uuid.UUID        `db:"id" json:"id"`
 	FullName  string           `db:"full_name" json:"full_name"`

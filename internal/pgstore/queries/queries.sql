@@ -39,13 +39,17 @@ UPDATE users
 SET deleted_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL;
 
+
 --- EVENTS --- 
 -- name: GetEvent :one
 SELECT 
     * 
-FROM events
-WHERE id = $1 AND deleted_at IS NULL
-LIMIT 1;
+FROM 
+    events
+WHERE 
+    id = $1 AND deleted_at IS NULL
+LIMIT 
+    1;
 
 -- name: ListEvents :many
 SELECT
@@ -79,3 +83,69 @@ RETURNING *;
 UPDATE events
 SET deleted_at = NOW()
 WHERE id = $1 AND deleted_at IS NULL;
+
+
+--- GUESTS ---
+-- name: CreateGuest :one
+INSERT INTO guests (
+    full_name, email, document_number, occupation, profile_picture, event_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6
+) RETURNING *;
+
+
+-- name: GetGuest :one
+SELECT 
+    *
+FROM 
+    guests
+WHERE 
+    id = $1 AND deleted_at IS NULL
+LIMIT 
+    1;
+
+
+-- name: GetGuestByDocumentNumber :one
+SELECT 
+    *
+FROM 
+    guests
+WHERE 
+    document_number = $1 AND deleted_at IS NULL
+LIMIT 
+    1;
+
+-- name: ListGuests :many
+SELECT 
+    *
+FROM
+    guests
+WHERE
+    deleted_at IS NULL
+ORDER BY 
+    full_name;
+
+
+-- name: UpdateGuest :one
+UPDATE 
+    guests
+SET 
+    full_name = $2,
+    email = $3,
+    occupation = $4,
+    profile_picture = $5,
+    document_number = $6,
+    event_id = $7,
+    updated_at = CURRENT_TIMESTAMP
+WHERE 
+    id = $1
+RETURNING *;
+
+
+-- name: SoftDeleteGuest :exec
+UPDATE
+    guests
+SET
+    deleted_at = NOW()
+WHERE 
+    id = $1 AND deleted_at IS NULL;
