@@ -149,3 +149,32 @@ SET
     deleted_at = NOW()
 WHERE 
     id = $1 AND deleted_at IS NULL;
+
+
+--- CHECKIN ---
+-- name: CreateCheckIn :one
+INSERT INTO checkins (
+    guest_id, event_id
+) VALUES (
+    $1, $2
+) RETURNING *;
+
+
+-- name: GetCheckIn :one
+SELECT 
+    *
+FROM 
+    checkins
+WHERE 
+    id = $1
+LIMIT 
+    1;
+
+
+-- name: ListCheckIns :many
+SELECT 
+    *
+FROM
+    checkins
+ORDER BY 
+    created_at;

@@ -9,6 +9,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Checkin struct {
+	ID        uuid.UUID        `db:"id" json:"id"`
+	EventID   uuid.UUID        `db:"event_id" json:"event_id"`
+	GuestID   uuid.UUID        `db:"guest_id" json:"guest_id"`
+	CreatedAt pgtype.Timestamp `db:"created_at" json:"created_at"`
+}
+
 type Event struct {
 	ID           uuid.UUID        `db:"id" json:"id"`
 	Name         string           `db:"name" json:"name"`

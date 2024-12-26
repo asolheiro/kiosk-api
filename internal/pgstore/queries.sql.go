@@ -12,6 +12,32 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createCheckIn = `-- name: CreateCheckIn :one
+INSERT INTO checkins (
+    guest_id, event_id
+) VALUES (
+    $1, $2
+) RETURNING id, event_id, guest_id, created_at
+`
+
+type CreateCheckInParams struct {
+	GuestID uuid.UUID `db:"guest_id" json:"guest_id"`
+	EventID uuid.UUID `db:"event_id" json:"event_id"`
+}
+
+// - CHECKIN ---
+func (q *Queries) CreateCheckIn(ctx context.Context, arg CreateCheckInParams) (Checkin, error) {
+	row := q.db.QueryRow(ctx, createCheckIn, arg.GuestID, arg.EventID)
+	var i Checkin
+	err := row.Scan(
+		&i.ID,
+		&i.EventID,
+		&i.GuestID,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createEvent = `-- name: CreateEvent :one
 INSERT INTO events (
     name, primary_color, logo
@@ -111,6 +137,29 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getCheckIn = `-- name: GetCheckIn :one
+SELECT 
+    id, event_id, guest_id, created_at
+FROM 
+    checkins
+WHERE 
+    id = $1
+LIMIT 
+    1
+`
+
+func (q *Queries) GetCheckIn(ctx context.Context, id uuid.UUID) (Checkin, error) {
+	row := q.db.QueryRow(ctx, getCheckIn, id)
+	var i Checkin
+	err := row.Scan(
+		&i.ID,
+		&i.EventID,
+		&i.GuestID,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -222,6 +271,40 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const listCheckIns = `-- name: ListCheckIns :many
+SELECT 
+    id, event_id, guest_id, created_at
+FROM
+    checkins
+ORDER BY 
+    created_at
+`
+
+func (q *Queries) ListCheckIns(ctx context.Context) ([]Checkin, error) {
+	rows, err := q.db.Query(ctx, listCheckIns)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Checkin
+	for rows.Next() {
+		var i Checkin
+		if err := rows.Scan(
+			&i.ID,
+			&i.EventID,
+			&i.GuestID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listEvents = `-- name: ListEvents :many

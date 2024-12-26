@@ -37,3 +37,11 @@ func GuestsRouter(r chi.Router, api api.API) {
 		r.Delete("/{guestId}", api.DeleteGuest)
 	})
 }
+
+func CheckinsRouter(r chi.Router, api api.API) {
+	r.Route("/checkin", func (r chi.Router) {
+		r.Post("/", api.PostCheckIn)
+		r.Get("/", api.ListCheckIns)
+		r.Get("/{checkInId}", api.GetCheckIn)
+	})
+}
