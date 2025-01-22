@@ -5,15 +5,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/asolheiro/kiosk-api/internal/pgstore"
+	"github.com/asolheiro/kiosk-api/internal/sqlitestore"
 	"github.com/go-chi/chi"
-	"github.com/google/uuid"
 )
 
 // Create a new check in
 // (POST /checkin)
 func (api API) PostCheckIn(w http.ResponseWriter, r *http.Request) {
-	var body pgstore.CreateCheckInParams
+	var body sqlitestore.CreateCheckInParams
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "error deconding JSON", http.StatusBadRequest)
@@ -30,18 +29,13 @@ func (api API) PostCheckIn(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	json.NewEncoder(w).Encode(checkIn)
-}	
+}
 
 // Get a checkIn
 // (GET /checkin/{checkIn})
 func (api API) GetCheckIn(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "checkInId")
-	stringId = strings.TrimSpace(stringId)
-	checkInId, err := uuid.Parse(stringId)
-	if err != nil {
-		http.Error(w, "invalid checkInId ", http.StatusBadRequest)
-		return
-	}
+	checkInId := strings.TrimSpace(stringId)
 
 	checkIn, err := api.repo.GetCheckIn(r.Context(), checkInId)
 	if err != nil {
@@ -72,8 +66,6 @@ func (api API) ListCheckIns(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(checkIn); err != nil {
 		http.Error(w, "error encoding response", http.StatusInternalServerError)
-		return 
+		return
 	}
 }
-
-

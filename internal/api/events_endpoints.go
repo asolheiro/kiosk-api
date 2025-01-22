@@ -6,15 +6,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/asolheiro/kiosk-api/internal/pgstore"
+	"github.com/asolheiro/kiosk-api/internal/sqlitestore"
 	"github.com/go-chi/chi"
-	"github.com/google/uuid"
 )
 
 // Create a new event
 // (POST /events)
 func (api API) PostEvent(w http.ResponseWriter, r *http.Request) {
-	var body pgstore.CreateEventParams
+	var body sqlitestore.CreateEventParams
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "error deconding JSON", http.StatusBadRequest)
@@ -31,18 +30,13 @@ func (api API) PostEvent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	json.NewEncoder(w).Encode(event)
-}	
+}
 
 // Get an event
 // (GET /events/{eventId})
 func (api API) GetEvent(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "eventId")
-	stringId = strings.TrimSpace(stringId)
-	eventId, err := uuid.Parse(stringId)
-	if err != nil {
-		http.Error(w, "invalid eventId", http.StatusBadRequest)
-		return
-	}
+	eventId := strings.TrimSpace(stringId)
 
 	event, err := api.repo.GetEvent(r.Context(), eventId)
 	if err != nil {
@@ -73,30 +67,23 @@ func (api API) ListEvents(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(events); err != nil {
 		http.Error(w, "error encoding response", http.StatusInternalServerError)
-		return 
+		return
 	}
 }
 
-
 // Update an event
 // (PUT /events/{eventId})
-func (api API) PutEvent( w http.ResponseWriter, r *http.Request) {
+func (api API) PutEvent(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "eventId")
-	stringId = strings.TrimSpace(stringId)
-	eventId, err := uuid.Parse(stringId)
-	
-	if err != nil {
-		http.Error(w, "invalid eventId", http.StatusBadRequest)
-		return
-	}
+	eventId := strings.TrimSpace(stringId)
 
-	_, err = api.repo.GetEvent(r.Context(), eventId)
+	_, err := api.repo.GetEvent(r.Context(), eventId)
 	if err != nil {
 		http.Error(w, "event not found", http.StatusNotFound)
 		return
 	}
 
-	var body pgstore.UpdateEventParams
+	var body sqlitestore.UpdateEventParams
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "error deconding workload", http.StatusBadRequest)
 	}
@@ -121,15 +108,9 @@ func (api API) PutEvent( w http.ResponseWriter, r *http.Request) {
 // (DELETE /events/{eventId})
 func (api API) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "eventId")
-	stringId = strings.TrimSpace(stringId)
-	
-	eventId, err := uuid.Parse(stringId)
-	if err != nil {
-		http.Error(w, "invalid eventId", http.StatusBadRequest)
-		return
-	}
+	eventId := strings.TrimSpace(stringId)
 
-	err = api.repo.SoftDeleteEvent(r.Context(), eventId)
+	err := api.repo.SoftDeleteEvent(r.Context(), eventId)
 	if err != nil {
 		http.Error(w, "error deleting event", http.StatusNotFound)
 		return

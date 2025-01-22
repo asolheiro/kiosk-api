@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS users (
+    id          TEXT NOT NULL PRIMARY KEY,
+    full_name   TEXT NOT NULL,
+    email       TEXT NOT NULL UNIQUE,
+    password    TEXT NOT NULL,
+    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at  TIMESTAMP
+);

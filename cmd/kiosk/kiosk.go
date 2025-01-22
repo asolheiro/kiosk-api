@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,7 +15,6 @@ import (
 	"github.com/asolheiro/kiosk-api/internal/utils"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/phenpessoa/gutils/netutils/httputils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -42,36 +42,43 @@ func main() {
 func run(ctx context.Context) error {
 	cfg := zap.NewDevelopmentConfig()
 	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	
+
 	logger, err := cfg.Build()
 	if err != nil {
 		return err
 	}
 
 	logger = logger.Named("kiosk-api")
-	defer func() {_ = logger.Sync() } ()
+	defer func() { _ = logger.Sync() }()
 
-	pool, err := pgxpool.New(
-		ctx,
-		fmt.Sprintf(
-			"user=%s password=%s host=%s port=%s dbname=%s",
-			os.Getenv("POSTGRES_USER"),
-			os.Getenv("POSTGRES_PASSWORD"),
-			os.Getenv("POSTGRES_HOST"),
-			os.Getenv("POSTGRES_PORT"),
-			os.Getenv("POSTGRES_DB"),
-		),
-	)
+	dbPath := os.Getenv("SQLITE_DB_PATH")
+	if dbPath == "" {
+		return fmt.Errorf("SQLITE_DB_PATH environment variable is not set")
+	}
+	db, err := sql.Open("sqlite3", dbPath)
+	// pool, err := pgxpool.New(
+	// 	ctx,
+	// 	fmt.Sprintf(
+	// 		"user=%s password=%s host=%s port=%s dbname=%s",
+	// 		os.Getenv("POSTGRES_USER"),
+	// 		os.Getenv("POSTGRES_PASSWORD"),
+	// 		os.Getenv("POSTGRES_HOST"),
+	// 		os.Getenv("POSTGRES_PORT"),
+	// 		os.Getenv("POSTGRES_DB"),
+	// 	),
+	// )
 	if err != nil {
 		return err
-	}; defer pool.Close()
-	
-	if err := pool.Ping(ctx); err != nil {
+	}
+	// defer pool.Close()
+	defer db.Close()
+
+	if err := db.Ping(); err != nil {
 		return err
 	}
 
-	apiInstance := api.NewAPI(
-		pool, 
+	apiInstance := api.NewSQliteAPI(
+		db,
 		logger,
 	)
 
@@ -92,14 +99,14 @@ func run(ctx context.Context) error {
 	utils.CheckinsRouter(r, apiInstance)
 
 	srv := http.Server{
-		Addr: ":8080",
-		Handler: r,
-		IdleTimeout: time.Minute,
-		ReadTimeout: 5 * time.Second,
+		Addr:         ":8080",
+		Handler:      r,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
-	 }
+	}
 
-	defer func () {
+	defer func() {
 		const timeout = 30 * time.Second
 		ctx, cancel := context.WithTimeout(
 			context.Background(), timeout,
@@ -109,7 +116,7 @@ func run(ctx context.Context) error {
 		if err := srv.Shutdown(ctx); err != nil {
 			logger.Error("Failed to shutdown server", zap.Error(err))
 		}
-	} ()
+	}()
 
 	errChan := make(chan error, 1)
 
@@ -118,15 +125,15 @@ func run(ctx context.Context) error {
 			errChan <- err
 		}
 		logger.Info("Starting server at port 8080...")
-	} ()
+	}()
 
 	select {
-	case <- ctx.Done():
+	case <-ctx.Done():
 		return nil
-	case err := <- errChan:
+	case err := <-errChan:
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			return err
 		}
 	}
-	return nil 
+	return nil
 }

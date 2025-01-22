@@ -5,15 +5,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/asolheiro/kiosk-api/internal/pgstore"
+	"github.com/asolheiro/kiosk-api/internal/sqlitestore"
 	"github.com/go-chi/chi"
-	"github.com/google/uuid"
 )
 
 // Create a new guest
 // (POST /guest)
 func (api API) PostGuest(w http.ResponseWriter, r *http.Request) {
-	var body pgstore.CreateGuestParams
+	var body sqlitestore.CreateGuestParams
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "error deconding JSON", http.StatusBadRequest)
@@ -30,18 +29,13 @@ func (api API) PostGuest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	json.NewEncoder(w).Encode(guest)
-}	
+}
 
 // Get an guest
 // (GET /guest/{guestId})
 func (api API) GetGuest(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "guestId")
-	stringId = strings.TrimSpace(stringId)
-	guestId, err := uuid.Parse(stringId)
-	if err != nil {
-		http.Error(w, "invalid guestId", http.StatusBadRequest)
-		return
-	}
+	guestId := strings.TrimSpace(stringId)
 
 	guest, err := api.repo.GetGuest(r.Context(), guestId)
 	if err != nil {
@@ -92,30 +86,23 @@ func (api API) ListGuests(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(guests); err != nil {
 		http.Error(w, "error encoding response", http.StatusInternalServerError)
-		return 
+		return
 	}
 }
 
-
 // Update an guest
 // (PUT /guest/{guestId})
-func (api API) PutGuest( w http.ResponseWriter, r *http.Request) {
+func (api API) PutGuest(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "guestId")
-	stringId = strings.TrimSpace(stringId)
-	guestId, err := uuid.Parse(stringId)
-	
-	if err != nil {
-		http.Error(w, "invalid guestId", http.StatusBadRequest)
-		return
-	}
+	guestId := strings.TrimSpace(stringId)
 
-	_, err = api.repo.GetGuest(r.Context(), guestId)
+	_, err := api.repo.GetGuest(r.Context(), guestId)
 	if err != nil {
 		http.Error(w, "guest not found", http.StatusNotFound)
 		return
 	}
 
-	var body pgstore.UpdateGuestParams
+	var body sqlitestore.UpdateGuestParams
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "error deconding workload", http.StatusBadRequest)
 	}
@@ -139,15 +126,9 @@ func (api API) PutGuest( w http.ResponseWriter, r *http.Request) {
 // (DELETE /guest/{guestId})
 func (api API) DeleteGuest(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "guestId")
-	stringId = strings.TrimSpace(stringId)
-	
-	guestId, err := uuid.Parse(stringId)
-	if err != nil {
-		http.Error(w, "invalid guestId", http.StatusBadRequest)
-		return
-	}
+	guestId := strings.TrimSpace(stringId)
 
-	err = api.repo.SoftDeleteGuest(r.Context(), guestId)
+	err := api.repo.SoftDeleteGuest(r.Context(), guestId)
 	if err != nil {
 		http.Error(w, "error deleting guest", http.StatusNotFound)
 		return

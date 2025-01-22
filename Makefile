@@ -19,3 +19,6 @@ migrate-force:
 
 generate:
 	sqlc generate -f ./internal/pgstore/sqlc.yaml
+
+generate-sqlite:
+	sqlc generate -f ./internal/sqlitestore/sqlc.yaml

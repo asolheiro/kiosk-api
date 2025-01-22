@@ -5,15 +5,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/asolheiro/kiosk-api/internal/pgstore"
+	"github.com/asolheiro/kiosk-api/internal/sqlitestore"
 	"github.com/go-chi/chi"
-	"github.com/google/uuid"
 )
 
 // Create a new user
 // (POST /users)
 func (api API) PostUser(w http.ResponseWriter, r *http.Request) {
-	var body pgstore.CreateUserParams
+	var body sqlitestore.CreateUserParams
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "error deconding JSON", http.StatusBadRequest)
@@ -30,18 +29,13 @@ func (api API) PostUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	json.NewEncoder(w).Encode(user)
-}	
+}
 
 // Get an user
 // (GET /users/{userId})
 func (api API) GetUser(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "userId")
-	stringId = strings.TrimSpace(stringId)
-	userId, err := uuid.Parse(stringId)
-	if err != nil {
-		http.Error(w, "invalid userId", http.StatusBadRequest)
-		return
-	}
+	userId := strings.TrimSpace(stringId)
 
 	user, err := api.repo.GetUser(r.Context(), userId)
 	if err != nil {
@@ -72,30 +66,23 @@ func (api API) ListUsers(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(users); err != nil {
 		http.Error(w, "error encoding response", http.StatusInternalServerError)
-		return 
+		return
 	}
 }
 
-
 // Update an user
 // (PUT /users/{userId})
-func (api API) PutUser( w http.ResponseWriter, r *http.Request) {
+func (api API) PutUser(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "userId")
-	stringId = strings.TrimSpace(stringId)
-	userId, err := uuid.Parse(stringId)
-	
-	if err != nil {
-		http.Error(w, "invalid userId", http.StatusBadRequest)
-		return
-	}
+	userId := strings.TrimSpace(stringId)
 
-	_, err = api.repo.GetUser(r.Context(), userId)
+	_, err := api.repo.GetUser(r.Context(), userId)
 	if err != nil {
 		http.Error(w, "user not found", http.StatusNotFound)
 		return
 	}
 
-	var body pgstore.UpdateUserParams
+	var body sqlitestore.UpdateUserParams
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "error deconding workload", http.StatusBadRequest)
 	}
@@ -119,15 +106,9 @@ func (api API) PutUser( w http.ResponseWriter, r *http.Request) {
 // (DELETE /users/{userId})
 func (api API) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "userId")
-	stringId = strings.TrimSpace(stringId)
-	
-	userId, err := uuid.Parse(stringId)
-	if err != nil {
-		http.Error(w, "invalid userId", http.StatusBadRequest)
-		return
-	}
+	userId := strings.TrimSpace(stringId)
 
-	err = api.repo.SoftDeleteUser(r.Context(), userId)
+	err := api.repo.SoftDeleteUser(r.Context(), userId)
 	if err != nil {
 		http.Error(w, "error deleting user", http.StatusNotFound)
 		return
