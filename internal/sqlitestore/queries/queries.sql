@@ -179,3 +179,54 @@ FROM
     checkins
 ORDER BY 
     created_at;
+
+
+-- name: BulkInsertGuests :exec
+INSERT INTO guests (
+    full_name, email, document_number, occupation, profile_picture, event_id
+) VALUES
+    -- sqlc will dynamically replace these placeholders with actual data
+    (?, ?, ?, ?, ?, ?);
+
+
+--- CONFIG ---
+-- name: GetConfig :one
+SELECT 
+    * 
+FROM 
+    config
+WHERE 
+    id = ?
+LIMIT 
+    1;
+
+-- name: ListConfigs :many
+SELECT
+    *
+FROM 
+    config
+ORDER BY
+    updated_at;
+
+-- name: CreateConfig :one
+INSERT INTO config (
+    id, template_image, printer, orientation
+) VALUES (
+    ?, ?, ?, ?
+)
+RETURNING *;
+
+-- name: UpdateConfig :one
+UPDATE config
+SET 
+    template_image = :template_image,
+    printer = :printer,
+    orientation = :orientation,
+    updated_at = CURRENT_TIMESTAMP
+WHERE 
+    id = :id
+RETURNING *;
+
+-- name: DeleteConfig :exec
+DELETE FROM config
+WHERE id = ?;

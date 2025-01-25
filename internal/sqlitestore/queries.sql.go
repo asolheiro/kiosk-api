@@ -10,6 +10,35 @@ import (
 	"database/sql"
 )
 
+const bulkInsertGuests = `-- name: BulkInsertGuests :exec
+INSERT INTO guests (
+    full_name, email, document_number, occupation, profile_picture, event_id
+) VALUES
+    -- sqlc will dynamically replace these placeholders with actual data
+    (?, ?, ?, ?, ?, ?)
+`
+
+type BulkInsertGuestsParams struct {
+	FullName       string         `db:"full_name" json:"full_name"`
+	Email          sql.NullString `db:"email" json:"email"`
+	DocumentNumber string         `db:"document_number" json:"document_number"`
+	Occupation     sql.NullString `db:"occupation" json:"occupation"`
+	ProfilePicture sql.NullString `db:"profile_picture" json:"profile_picture"`
+	EventID        string         `db:"event_id" json:"event_id"`
+}
+
+func (q *Queries) BulkInsertGuests(ctx context.Context, arg BulkInsertGuestsParams) error {
+	_, err := q.db.ExecContext(ctx, bulkInsertGuests,
+		arg.FullName,
+		arg.Email,
+		arg.DocumentNumber,
+		arg.Occupation,
+		arg.ProfilePicture,
+		arg.EventID,
+	)
+	return err
+}
+
 const createCheckIn = `-- name: CreateCheckIn :one
 INSERT INTO checkins (
     guest_id, event_id
@@ -32,6 +61,40 @@ func (q *Queries) CreateCheckIn(ctx context.Context, arg CreateCheckInParams) (C
 		&i.EventID,
 		&i.GuestID,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createConfig = `-- name: CreateConfig :one
+INSERT INTO config (
+    id, template_image, printer, orientation
+) VALUES (
+    ?, ?, ?, ?
+)
+RETURNING id, template_image, printer, orientation, updated_at
+`
+
+type CreateConfigParams struct {
+	ID            string         `db:"id" json:"id"`
+	TemplateImage sql.NullString `db:"template_image" json:"template_image"`
+	Printer       sql.NullString `db:"printer" json:"printer"`
+	Orientation   sql.NullString `db:"orientation" json:"orientation"`
+}
+
+func (q *Queries) CreateConfig(ctx context.Context, arg CreateConfigParams) (Config, error) {
+	row := q.db.QueryRowContext(ctx, createConfig,
+		arg.ID,
+		arg.TemplateImage,
+		arg.Printer,
+		arg.Orientation,
+	)
+	var i Config
+	err := row.Scan(
+		&i.ID,
+		&i.TemplateImage,
+		&i.Printer,
+		&i.Orientation,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -139,6 +202,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const deleteConfig = `-- name: DeleteConfig :exec
+DELETE FROM config
+WHERE id = ?
+`
+
+func (q *Queries) DeleteConfig(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, deleteConfig, id)
+	return err
+}
+
 const getCheckIn = `-- name: GetCheckIn :one
 SELECT 
     id, event_id, guest_id, created_at
@@ -158,6 +231,31 @@ func (q *Queries) GetCheckIn(ctx context.Context, id string) (Checkin, error) {
 		&i.EventID,
 		&i.GuestID,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getConfig = `-- name: GetConfig :one
+SELECT 
+    id, template_image, printer, orientation, updated_at 
+FROM 
+    config
+WHERE 
+    id = ?
+LIMIT 
+    1
+`
+
+// - CONFIG ---
+func (q *Queries) GetConfig(ctx context.Context, id string) (Config, error) {
+	row := q.db.QueryRowContext(ctx, getConfig, id)
+	var i Config
+	err := row.Scan(
+		&i.ID,
+		&i.TemplateImage,
+		&i.Printer,
+		&i.Orientation,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -294,6 +392,44 @@ func (q *Queries) ListCheckIns(ctx context.Context) ([]Checkin, error) {
 			&i.EventID,
 			&i.GuestID,
 			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listConfigs = `-- name: ListConfigs :many
+SELECT
+    id, template_image, printer, orientation, updated_at
+FROM 
+    config
+ORDER BY
+    updated_at
+`
+
+func (q *Queries) ListConfigs(ctx context.Context) ([]Config, error) {
+	rows, err := q.db.QueryContext(ctx, listConfigs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Config
+	for rows.Next() {
+		var i Config
+		if err := rows.Scan(
+			&i.ID,
+			&i.TemplateImage,
+			&i.Printer,
+			&i.Orientation,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -469,6 +605,43 @@ WHERE id = ? AND deleted_at IS NULL
 func (q *Queries) SoftDeleteUser(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, softDeleteUser, id)
 	return err
+}
+
+const updateConfig = `-- name: UpdateConfig :one
+UPDATE config
+SET 
+    template_image = ?1,
+    printer = ?2,
+    orientation = ?3,
+    updated_at = CURRENT_TIMESTAMP
+WHERE 
+    id = ?4
+RETURNING id, template_image, printer, orientation, updated_at
+`
+
+type UpdateConfigParams struct {
+	TemplateImage sql.NullString `db:"template_image" json:"template_image"`
+	Printer       sql.NullString `db:"printer" json:"printer"`
+	Orientation   sql.NullString `db:"orientation" json:"orientation"`
+	ID            string         `db:"id" json:"id"`
+}
+
+func (q *Queries) UpdateConfig(ctx context.Context, arg UpdateConfigParams) (Config, error) {
+	row := q.db.QueryRowContext(ctx, updateConfig,
+		arg.TemplateImage,
+		arg.Printer,
+		arg.Orientation,
+		arg.ID,
+	)
+	var i Config
+	err := row.Scan(
+		&i.ID,
+		&i.TemplateImage,
+		&i.Printer,
+		&i.Orientation,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updateEvent = `-- name: UpdateEvent :one

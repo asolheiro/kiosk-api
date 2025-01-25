@@ -18,9 +18,11 @@ import (
 	"github.com/phenpessoa/gutils/netutils/httputils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	_ "modernc.org/sqlite"
 )
 
 func main() {
+	fmt.Println("Starting kiosk-api...")
 	ctx := context.Background()
 	ctx, cancel := signal.NotifyContext(
 		ctx,
@@ -39,6 +41,8 @@ func main() {
 	fmt.Println("Goodby...")
 }
 
+var ddl string
+
 func run(ctx context.Context) error {
 	cfg := zap.NewDevelopmentConfig()
 	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -55,22 +59,18 @@ func run(ctx context.Context) error {
 	if dbPath == "" {
 		return fmt.Errorf("SQLITE_DB_PATH environment variable is not set")
 	}
-	db, err := sql.Open("sqlite3", dbPath)
-	// pool, err := pgxpool.New(
-	// 	ctx,
-	// 	fmt.Sprintf(
-	// 		"user=%s password=%s host=%s port=%s dbname=%s",
-	// 		os.Getenv("POSTGRES_USER"),
-	// 		os.Getenv("POSTGRES_PASSWORD"),
-	// 		os.Getenv("POSTGRES_HOST"),
-	// 		os.Getenv("POSTGRES_PORT"),
-	// 		os.Getenv("POSTGRES_DB"),
-	// 	),
-	// )
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return err
 	}
-	// defer pool.Close()
+
+	if _, err := db.ExecContext(ctx, ddl); err != nil {
+		return err
+	}
+
+	if err != nil {
+		return err
+	}
 	defer db.Close()
 
 	if err := db.Ping(); err != nil {
@@ -97,6 +97,8 @@ func run(ctx context.Context) error {
 	utils.EventsRouter(r, apiInstance)
 	utils.GuestsRouter(r, apiInstance)
 	utils.CheckinsRouter(r, apiInstance)
+	utils.ConfigRouter(r, apiInstance)
+	utils.PrintRouter(r, apiInstance)
 
 	srv := http.Server{
 		Addr:         ":8080",

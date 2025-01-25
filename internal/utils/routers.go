@@ -5,8 +5,6 @@ import (
 	"github.com/go-chi/chi"
 )
 
-
-
 func UsersRouter(r chi.Router, api api.API) {
 	r.Route("/user", func(r chi.Router) {
 		r.Post("/", api.PostUser)
@@ -39,9 +37,24 @@ func GuestsRouter(r chi.Router, api api.API) {
 }
 
 func CheckinsRouter(r chi.Router, api api.API) {
-	r.Route("/checkin", func (r chi.Router) {
+	r.Route("/checkin", func(r chi.Router) {
 		r.Post("/", api.PostCheckIn)
 		r.Get("/", api.ListCheckIns)
 		r.Get("/{checkInId}", api.GetCheckIn)
+	})
+}
+
+func PrintRouter(r chi.Router, api api.API) {
+	r.Route("/printer", func(r chi.Router) {
+		r.Post("/", api.PostPrint)
+	})
+}
+
+func ConfigRouter(r chi.Router, api api.API) {
+	r.Route("/config", func(r chi.Router) {
+		r.Get("/", api.GetConfig)
+		r.Put("/{configId}", api.PutConfig)
+		r.Post("/{configId}/import", api.ImportGuestsConfig)
+
 	})
 }

@@ -22,3 +22,8 @@ generate:
 
 generate-sqlite:
 	sqlc generate -f ./internal/sqlitestore/sqlc.yaml
+
+
+run:
+	@clear
+	@go run cmd/kiosk/kiosk.go
