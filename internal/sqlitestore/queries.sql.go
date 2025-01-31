@@ -67,11 +67,11 @@ func (q *Queries) CreateCheckIn(ctx context.Context, arg CreateCheckInParams) (C
 
 const createConfig = `-- name: CreateConfig :one
 INSERT INTO config (
-    id, template_image, printer, orientation
+    id, template_image, printer, orientation, position_x, position_y, font_size, width_limiter
 ) VALUES (
-    ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?
 )
-RETURNING id, template_image, printer, orientation, updated_at
+RETURNING id, template_image, printer, orientation, updated_at, position_x, position_y, font_size, width_limiter
 `
 
 type CreateConfigParams struct {
@@ -79,6 +79,10 @@ type CreateConfigParams struct {
 	TemplateImage sql.NullString `db:"template_image" json:"template_image"`
 	Printer       sql.NullString `db:"printer" json:"printer"`
 	Orientation   sql.NullString `db:"orientation" json:"orientation"`
+	PositionX     sql.NullInt64  `db:"position_x" json:"position_x"`
+	PositionY     sql.NullInt64  `db:"position_y" json:"position_y"`
+	FontSize      sql.NullInt64  `db:"font_size" json:"font_size"`
+	WidthLimiter  sql.NullInt64  `db:"width_limiter" json:"width_limiter"`
 }
 
 func (q *Queries) CreateConfig(ctx context.Context, arg CreateConfigParams) (Config, error) {
@@ -87,6 +91,10 @@ func (q *Queries) CreateConfig(ctx context.Context, arg CreateConfigParams) (Con
 		arg.TemplateImage,
 		arg.Printer,
 		arg.Orientation,
+		arg.PositionX,
+		arg.PositionY,
+		arg.FontSize,
+		arg.WidthLimiter,
 	)
 	var i Config
 	err := row.Scan(
@@ -95,6 +103,10 @@ func (q *Queries) CreateConfig(ctx context.Context, arg CreateConfigParams) (Con
 		&i.Printer,
 		&i.Orientation,
 		&i.UpdatedAt,
+		&i.PositionX,
+		&i.PositionY,
+		&i.FontSize,
+		&i.WidthLimiter,
 	)
 	return i, err
 }
@@ -237,7 +249,7 @@ func (q *Queries) GetCheckIn(ctx context.Context, id string) (Checkin, error) {
 
 const getConfig = `-- name: GetConfig :one
 SELECT 
-    id, template_image, printer, orientation, updated_at 
+    id, template_image, printer, orientation, updated_at, position_x, position_y, font_size, width_limiter 
 FROM 
     config
 WHERE 
@@ -256,6 +268,10 @@ func (q *Queries) GetConfig(ctx context.Context, id string) (Config, error) {
 		&i.Printer,
 		&i.Orientation,
 		&i.UpdatedAt,
+		&i.PositionX,
+		&i.PositionY,
+		&i.FontSize,
+		&i.WidthLimiter,
 	)
 	return i, err
 }
@@ -283,6 +299,32 @@ func (q *Queries) GetEvent(ctx context.Context, id string) (Event, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getFirstConfig = `-- name: GetFirstConfig :one
+SELECT 
+    id, template_image, printer, orientation, updated_at, position_x, position_y, font_size, width_limiter 
+FROM 
+    config
+LIMIT 
+    1
+`
+
+func (q *Queries) GetFirstConfig(ctx context.Context) (Config, error) {
+	row := q.db.QueryRowContext(ctx, getFirstConfig)
+	var i Config
+	err := row.Scan(
+		&i.ID,
+		&i.TemplateImage,
+		&i.Printer,
+		&i.Orientation,
+		&i.UpdatedAt,
+		&i.PositionX,
+		&i.PositionY,
+		&i.FontSize,
+		&i.WidthLimiter,
 	)
 	return i, err
 }
@@ -408,7 +450,7 @@ func (q *Queries) ListCheckIns(ctx context.Context) ([]Checkin, error) {
 
 const listConfigs = `-- name: ListConfigs :many
 SELECT
-    id, template_image, printer, orientation, updated_at
+    id, template_image, printer, orientation, updated_at, position_x, position_y, font_size, width_limiter
 FROM 
     config
 ORDER BY
@@ -430,6 +472,10 @@ func (q *Queries) ListConfigs(ctx context.Context) ([]Config, error) {
 			&i.Printer,
 			&i.Orientation,
 			&i.UpdatedAt,
+			&i.PositionX,
+			&i.PositionY,
+			&i.FontSize,
+			&i.WidthLimiter,
 		); err != nil {
 			return nil, err
 		}
@@ -613,16 +659,24 @@ SET
     template_image = ?1,
     printer = ?2,
     orientation = ?3,
+    position_x = ?4,
+    position_y = ?5,
+    font_size = ?6,
+    width_limiter = ?7,
     updated_at = CURRENT_TIMESTAMP
 WHERE 
-    id = ?4
-RETURNING id, template_image, printer, orientation, updated_at
+    id = ?8
+RETURNING id, template_image, printer, orientation, updated_at, position_x, position_y, font_size, width_limiter
 `
 
 type UpdateConfigParams struct {
 	TemplateImage sql.NullString `db:"template_image" json:"template_image"`
 	Printer       sql.NullString `db:"printer" json:"printer"`
 	Orientation   sql.NullString `db:"orientation" json:"orientation"`
+	PositionX     sql.NullInt64  `db:"position_x" json:"position_x"`
+	PositionY     sql.NullInt64  `db:"position_y" json:"position_y"`
+	FontSize      sql.NullInt64  `db:"font_size" json:"font_size"`
+	WidthLimiter  sql.NullInt64  `db:"width_limiter" json:"width_limiter"`
 	ID            string         `db:"id" json:"id"`
 }
 
@@ -631,6 +685,10 @@ func (q *Queries) UpdateConfig(ctx context.Context, arg UpdateConfigParams) (Con
 		arg.TemplateImage,
 		arg.Printer,
 		arg.Orientation,
+		arg.PositionX,
+		arg.PositionY,
+		arg.FontSize,
+		arg.WidthLimiter,
 		arg.ID,
 	)
 	var i Config
@@ -640,6 +698,10 @@ func (q *Queries) UpdateConfig(ctx context.Context, arg UpdateConfigParams) (Con
 		&i.Printer,
 		&i.Orientation,
 		&i.UpdatedAt,
+		&i.PositionX,
+		&i.PositionY,
+		&i.FontSize,
+		&i.WidthLimiter,
 	)
 	return i, err
 }

@@ -7,15 +7,11 @@ require (
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.1
+	github.com/oklog/ulid/v2 v2.1.0
 	github.com/phenpessoa/gutils v0.0.0-20240130030144-d391b9329afd
 	go.uber.org/zap v1.27.0
+	golang.org/x/image v0.23.0
 	modernc.org/sqlite v1.34.5
-)
-
-require (
-	github.com/fogleman/gg v1.3.0 // indirect
-	github.com/oklog/ulid/v2 v2.1.0 // indirect
-	golang.org/x/image v0.23.0 // indirect
 )
 
 require (

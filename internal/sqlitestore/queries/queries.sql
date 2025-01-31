@@ -200,6 +200,15 @@ WHERE
 LIMIT 
     1;
 
+-- name: GetFirstConfig :one
+SELECT 
+    * 
+FROM 
+    config
+LIMIT 
+    1;
+
+
 -- name: ListConfigs :many
 SELECT
     *
@@ -210,9 +219,9 @@ ORDER BY
 
 -- name: CreateConfig :one
 INSERT INTO config (
-    id, template_image, printer, orientation
+    id, template_image, printer, orientation, position_x, position_y, font_size, width_limiter
 ) VALUES (
-    ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?
 )
 RETURNING *;
 
@@ -222,6 +231,10 @@ SET
     template_image = :template_image,
     printer = :printer,
     orientation = :orientation,
+    position_x = :position_x,
+    position_y = :position_y,
+    font_size = :font_size,
+    width_limiter = :width_limiter,
     updated_at = CURRENT_TIMESTAMP
 WHERE 
     id = :id

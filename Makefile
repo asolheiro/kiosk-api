@@ -9,6 +9,10 @@ create-migration: ## Create an empty migration
 migrate-up:
 	@migrate -path=./internal/pgstore/migrations -database "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=${POSTGRES_SSL}" up
 
+migrate-up-sqlite:
+	@migrate -path=./internal/sqlitestore/migrations -database "sqlite://${SQLITE_DB_PATH}" up
+
+
 migrate-down:
 	@read -p "Number of migrations you want to rollback (default: 1): " NUM; NUM=$${NUM:-1}; \
 	migrate -path=./internal/pgstore/migrations -database "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=${POSTGRES_SSL}" down $${NUM}
@@ -24,6 +28,6 @@ generate-sqlite:
 	sqlc generate -f ./internal/sqlitestore/sqlc.yaml
 
 
-run:
+run: migrate-up-sqlite
 	@clear
 	@go run cmd/kiosk/kiosk.go

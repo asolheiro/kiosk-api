@@ -22,6 +22,10 @@ type Config struct {
 	Printer       sql.NullString `db:"printer" json:"printer"`
 	Orientation   sql.NullString `db:"orientation" json:"orientation"`
 	UpdatedAt     interface{}    `db:"updated_at" json:"updated_at"`
+	PositionX     sql.NullInt64  `db:"position_x" json:"position_x"`
+	PositionY     sql.NullInt64  `db:"position_y" json:"position_y"`
+	FontSize      sql.NullInt64  `db:"font_size" json:"font_size"`
+	WidthLimiter  sql.NullInt64  `db:"width_limiter" json:"width_limiter"`
 }
 
 type Event struct {

@@ -10,10 +10,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fogleman/gg"
+	"github.com/golang/freetype/truetype"
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/image/font"
-	"golang.org/x/image/font/basicfont"
 	"golang.org/x/image/math/fixed"
 )
 
@@ -35,16 +34,35 @@ func GetTemplateImage(path string) (*image.RGBA, error) {
 	return rgba, nil
 }
 
-func UpdateImage(rgba *image.RGBA, x, y int, title string, description string) error {
-	// Draw title
-	err := drawText(rgba, x, y, title)
+func UpdateImage(rgba *image.RGBA, x, y int, title string, description string, fontZise int) error {
+	fontPath := "ARIALBD.ttf"
+	fontBytes, err := os.ReadFile(fontPath)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	// Parse the font
+	drawFont, err := truetype.Parse(fontBytes)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	// Create the font drawer
+	fnt := truetype.NewFace(drawFont, &truetype.Options{
+		Size:    float64(fontZise),
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+
+	err = drawText(fnt, rgba, x, y, title)
 	if err != nil {
 		fmt.Printf("error drawing text: %v", err)
 		return err
 	}
 
 	// Draw description
-	err = drawText(rgba, x, y+50, description)
+	err = drawText(fnt, rgba, x, y+50, description)
 	if err != nil {
 		fmt.Printf("error drawing text: %v", err)
 		return err
@@ -52,14 +70,14 @@ func UpdateImage(rgba *image.RGBA, x, y int, title string, description string) e
 	return nil
 }
 
-func drawText(rgba *image.RGBA, x, y int, label string) error {
+func drawText(fnt font.Face, rgba *image.RGBA, x, y int, label string) error {
 	col := color.RGBA{0, 0, 0, 255}
 	point := fixed.Point26_6{X: fixed.I(x), Y: fixed.I(y)}
 
 	d := &font.Drawer{
 		Dst:  rgba,
 		Src:  image.NewUniform(col),
-		Face: basicfont.Face7x13,
+		Face: fnt,
 		Dot:  point,
 	}
 	d.DrawString(label)
@@ -80,12 +98,12 @@ func SaveImage(rgba *image.RGBA, outputPath string) {
 	log.Printf("image saved successfully to %s", outputPath)
 }
 
-func DefaultPrint(path string, title string, description string, x, y int) error {
+func DefaultPrint(path string, title string, description string, x, y, fontZise int) error {
 	image, err := GetTemplateImage(path)
 	if err != nil {
 		return err
 	}
-	err = UpdateImage(image, x, y, title, description)
+	err = UpdateImage(image, x, y, title, description, fontZise)
 	if err != nil {
 
 		return err
@@ -93,28 +111,6 @@ func DefaultPrint(path string, title string, description string, x, y int) error
 
 	SaveImage(image, generateNewName("v1", path))
 
-	return nil
-}
-
-func CustomPrint(path string, title string, description string, x, y int) error {
-	im, err := gg.LoadImage(path)
-	if err != nil {
-		return err
-	}
-
-	dc := gg.NewContext(im.Bounds().Dx(), im.Bounds().Dy())
-	dc.SetRGB(1, 1, 1)
-	dc.Clear()
-	dc.SetRGB(0, 0, 0)
-	if err := dc.LoadFontFace("Roboto-VariableFont_wdth,wght.ttf", 14); err != nil {
-		return err
-	}
-	dc.DrawImage(im, 0, 0)
-	dc.DrawStringAnchored(title, float64(x), float64(y), 0.5, 0.5)
-
-	dc.DrawStringAnchored(description, float64(x), float64(y+50), 0.5, 0.5)
-	dc.Clip()
-	dc.SavePNG(generateNewName("v2", path))
 	return nil
 }
 
