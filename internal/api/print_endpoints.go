@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/asolheiro/kiosk-api/internal/imageService"
+	"github.com/godoes/printers"
 )
 
 type PostPrintParams struct {
@@ -40,4 +41,18 @@ func (api API) PostPrint(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	json.NewEncoder(w).Encode(map[string]string{"message": "Image saved"})
+}
+
+// Create a new config
+// (GET /printers)
+func (api API) GetPrinters(w http.ResponseWriter, r *http.Request) {
+	names, err := printers.ReadNames()
+	if err != nil {
+		http.Error(w, "error getting printers", http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+
+	json.NewEncoder(w).Encode(names)
 }

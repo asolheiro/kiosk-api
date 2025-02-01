@@ -45,8 +45,11 @@ func CheckinsRouter(r chi.Router, api api.API) {
 }
 
 func PrintRouter(r chi.Router, api api.API) {
-	r.Route("/printer", func(r chi.Router) {
+	r.Route("/print", func(r chi.Router) {
 		r.Post("/", api.PostPrint)
+	})
+	r.Route("/printers", func(r chi.Router) {
+		r.Get("/", api.GetPrinters)
 	})
 }
 
