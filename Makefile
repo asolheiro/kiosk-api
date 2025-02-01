@@ -10,7 +10,7 @@ migrate-up:
 	@migrate -path=./internal/pgstore/migrations -database "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=${POSTGRES_SSL}" up
 
 migrate-up-sqlite:
-	@migrate -path=./internal/sqlitestore/migrations -database "sqlite://${SQLITE_DB_PATH}" up
+	@migrate -path=./internal/sqlitestore/migrations -database "./kiosk.db" up
 
 
 migrate-down:

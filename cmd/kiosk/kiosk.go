@@ -57,7 +57,7 @@ func run(ctx context.Context) error {
 
 	dbPath := os.Getenv("SQLITE_DB_PATH")
 	if dbPath == "" {
-		return fmt.Errorf("SQLITE_DB_PATH environment variable is not set")
+		dbPath = "./kiosk.db"
 	}
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
@@ -68,9 +68,6 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
 	defer db.Close()
 
 	if err := db.Ping(); err != nil {

@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/godoes/printers"
 	"github.com/golang/freetype/truetype"
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/image/font"
@@ -98,20 +99,75 @@ func SaveImage(rgba *image.RGBA, outputPath string) {
 	log.Printf("image saved successfully to %s", outputPath)
 }
 
-func DefaultPrint(path string, title string, description string, x, y, fontZise int) error {
+func DefaultPrint(path string, title string, description string, x, y, fontZise int) (string, error) {
 	image, err := GetTemplateImage(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 	err = UpdateImage(image, x, y, title, description, fontZise)
 	if err != nil {
 
+		return "", err
+	}
+
+	finalPath := generateNewName("v1", path)
+	SaveImage(image, finalPath)
+
+	return finalPath, nil
+}
+
+func Print(filePath string, printerName string) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	// Read file data
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	p, err := printers.Open(printerName)
+	if err != nil {
 		return err
 	}
 
-	SaveImage(image, generateNewName("v1", path))
+	defer func() {
+		_ = p.Close()
+	}()
+	println("Printer opened")
+	err = p.StartDocument("Print Job", "RAW")
+	if err != nil {
+		log.Fatal(err)
+	}
+	println("Document started")
+	err = p.StartPage()
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	println("Page started")
+	_, err = p.Write(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = p.EndPage()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	println("Page ended")
+	err = p.EndDocument()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	println("Document ended")
+	log.Println("Print job sent successfully")
 	return nil
+
 }
 
 func generateNewName(prefix string, path string) string {

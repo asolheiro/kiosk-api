@@ -17,8 +17,8 @@ import (
 // (POST /config)
 func (api API) PostConfig(w http.ResponseWriter, r *http.Request) {
 	var body sqlitestore.CreateConfigParams
-
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		println(err)
 		http.Error(w, "error deconding JSON", http.StatusBadRequest)
 		return
 	}
@@ -35,25 +35,43 @@ func (api API) PostConfig(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(config)
 }
 
+type UpdateConfigParams struct {
+	TemplateImage string `db:"template_image" json:"template_image"`
+	Printer       string `db:"printer" json:"printer"`
+	Orientation   string `db:"orientation" json:"orientation"`
+	PositionX     int    `db:"position_x" json:"position_x"`
+	PositionY     int    `db:"position_y" json:"position_y"`
+	FontSize      int    `db:"font_size" json:"font_size"`
+	WidthLimiter  int    `db:"width_limiter" json:"width_limiter"`
+}
+
 // Update an config
 // (PUT /config/{configId})
 func (api API) PutConfig(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "configId")
 	configId := strings.TrimSpace(stringId)
 
-	_, err := api.repo.GetGuest(r.Context(), configId)
+	_, err := api.repo.GetConfig(r.Context(), configId)
 	if err != nil {
 		http.Error(w, "config not found", http.StatusNotFound)
 		return
 	}
 
-	var body sqlitestore.UpdateGuestParams
+	var body UpdateConfigParams
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "error deconding workload", http.StatusBadRequest)
 	}
-	body.ID = configId
 
-	config, err := api.repo.UpdateGuest(r.Context(), body)
+	config, err := api.repo.UpdateConfig(r.Context(), sqlitestore.UpdateConfigParams{
+		TemplateImage: sql.NullString{String: body.TemplateImage, Valid: body.TemplateImage != ""},
+		Printer:       sql.NullString{String: body.Printer, Valid: body.Printer != ""},
+		Orientation:   sql.NullString{String: body.Orientation, Valid: body.Orientation != ""},
+		PositionX:     sql.NullInt64{Int64: int64(body.PositionX), Valid: body.PositionX != 0},
+		PositionY:     sql.NullInt64{Int64: int64(body.PositionY), Valid: body.PositionY != 0},
+		FontSize:      sql.NullInt64{Int64: int64(body.FontSize), Valid: body.FontSize != 0},
+		WidthLimiter:  sql.NullInt64{Int64: int64(body.WidthLimiter), Valid: body.WidthLimiter != 0},
+		ID:            configId,
+	})
 	if err != nil {
 		http.Error(w, "error updating config", http.StatusNotFound)
 		return

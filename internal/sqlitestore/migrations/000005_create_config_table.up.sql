@@ -3,6 +3,6 @@ CREATE TABLE IF NOT EXISTS config (
     template_image    TEXT,
     printer    TEXT,
     orientation    TEXT,
-    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

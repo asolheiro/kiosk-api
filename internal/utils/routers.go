@@ -50,11 +50,13 @@ func PrintRouter(r chi.Router, api api.API) {
 	})
 	r.Route("/printers", func(r chi.Router) {
 		r.Get("/", api.GetPrinters)
+		r.Get("/{printerName}", api.GetPrinterInfo)
 	})
 }
 
 func ConfigRouter(r chi.Router, api api.API) {
 	r.Route("/config", func(r chi.Router) {
+		r.Post("/", api.PostConfig)
 		r.Get("/", api.GetConfig)
 		r.Put("/{configId}", api.PutConfig)
 		r.Post("/{configId}/import", api.ImportGuestsConfig)

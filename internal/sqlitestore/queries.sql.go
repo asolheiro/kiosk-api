@@ -76,13 +76,13 @@ RETURNING id, template_image, printer, orientation, updated_at, position_x, posi
 
 type CreateConfigParams struct {
 	ID            string         `db:"id" json:"id"`
-	TemplateImage sql.NullString `db:"template_image" json:"template_image"`
-	Printer       sql.NullString `db:"printer" json:"printer"`
-	Orientation   sql.NullString `db:"orientation" json:"orientation"`
-	PositionX     sql.NullInt64  `db:"position_x" json:"position_x"`
-	PositionY     sql.NullInt64  `db:"position_y" json:"position_y"`
-	FontSize      sql.NullInt64  `db:"font_size" json:"font_size"`
-	WidthLimiter  sql.NullInt64  `db:"width_limiter" json:"width_limiter"`
+	TemplateImage string `db:"template_image" json:"template_image"`
+	Printer       string `db:"printer" json:"printer"`
+	Orientation   string `db:"orientation" json:"orientation"`
+	PositionX     int  `db:"position_x" json:"position_x"`
+	PositionY     int  `db:"position_y" json:"position_y"`
+	FontSize      int  `db:"font_size" json:"font_size"`
+	WidthLimiter  int  `db:"width_limiter" json:"width_limiter"`
 }
 
 func (q *Queries) CreateConfig(ctx context.Context, arg CreateConfigParams) (Config, error) {
