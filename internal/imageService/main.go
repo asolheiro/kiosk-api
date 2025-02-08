@@ -110,6 +110,13 @@ func DefaultPrint(path string, title string, description string, x, y, fontZise 
 		return "", err
 	}
 
+	if _, err := os.Stat("./temp"); os.IsNotExist(err) {
+		err = os.Mkdir("./temp", os.ModePerm)
+		if err != nil {
+			return "", fmt.Errorf("failed to create temp directory: %v", err)
+		}
+	}
+
 	finalPath := generateNewName("v1", path)
 	SaveImage(image, finalPath)
 
@@ -171,14 +178,8 @@ func Print(filePath string, printerName string) error {
 }
 
 func generateNewName(prefix string, path string) string {
-	newName := path
-	pathParts := strings.Split(path, "\\")
-	if os.PathSeparator == '\\' {
-		pathParts = strings.Split(path, "\\")
-	} else {
-		pathParts = strings.Split(path, "/")
-	}
+	pathParts := strings.Split(path, string(os.PathSeparator))
 	fileName := pathParts[len(pathParts)-1]
-	newName = strings.Join(append(pathParts[:len(pathParts)-1], prefix+" "+ulid.Make().String()+"-"+fileName), "/")
+	newName := fmt.Sprintf("./temp/%s-%s-%s", prefix, ulid.Make().String(), fileName)
 	return newName
 }
