@@ -26,7 +26,7 @@ func EventsRouter(r chi.Router, api api.API) {
 }
 
 func GuestsRouter(r chi.Router, api api.API) {
-	r.Route("/guest", func(r chi.Router) {
+	r.Route("/guests", func(r chi.Router) {
 		r.Post("/", api.PostGuest)
 		r.Get("/", api.ListGuests)
 		r.Get("/{guestId}", api.GetGuest)
@@ -59,7 +59,10 @@ func ConfigRouter(r chi.Router, api api.API) {
 		r.Post("/", api.PostConfig)
 		r.Get("/", api.GetConfig)
 		r.Put("/{configId}", api.PutConfig)
-		r.Post("/{configId}/import", api.ImportGuestsConfig)
+
+	})
+	r.Route("/import", func(r chi.Router) {
+		r.Post("/", api.ImportGuestsConfig)
 
 	})
 }

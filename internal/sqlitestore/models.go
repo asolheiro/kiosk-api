@@ -41,10 +41,10 @@ type Event struct {
 type Guest struct {
 	ID             string         `db:"id" json:"id"`
 	FullName       string         `db:"full_name" json:"full_name"`
-	Email          sql.NullString `db:"email" json:"email"`
+	Email          string `db:"email" json:"email"`
 	DocumentNumber string         `db:"document_number" json:"document_number"`
-	Occupation     sql.NullString `db:"occupation" json:"occupation"`
-	ProfilePicture sql.NullString `db:"profile_picture" json:"profile_picture"`
+	Occupation     string `db:"occupation" json:"occupation"`
+	ProfilePicture string `db:"profile_picture" json:"profile_picture"`
 	EventID        string         `db:"event_id" json:"event_id"`
 	CreatedAt      time.Time      `db:"created_at" json:"created_at"`
 	UpdatedAt      time.Time      `db:"updated_at" json:"updated_at"`

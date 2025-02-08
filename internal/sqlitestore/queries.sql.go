@@ -8,6 +8,8 @@ package sqlitestore
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 const bulkInsertGuests = `-- name: BulkInsertGuests :exec
@@ -143,9 +145,9 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 
 const createGuest = `-- name: CreateGuest :one
 INSERT INTO guests (
-    full_name, email, document_number, occupation, profile_picture, event_id
+    id, full_name, email, document_number, occupation, profile_picture, event_id
 ) VALUES (
-    ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?
 ) RETURNING id, full_name, email, document_number, occupation, profile_picture, event_id, created_at, updated_at, deleted_at
 `
 
@@ -161,6 +163,7 @@ type CreateGuestParams struct {
 // - GUESTS ---
 func (q *Queries) CreateGuest(ctx context.Context, arg CreateGuestParams) (Guest, error) {
 	row := q.db.QueryRowContext(ctx, createGuest,
+		uuid.New().String(),
 		arg.FullName,
 		arg.Email,
 		arg.DocumentNumber,

@@ -25,7 +25,7 @@ generate:
 	sqlc generate -f ./internal/pgstore/sqlc.yaml
 
 generate-sqlite:
-	sqlc generate -f ./internal/sqlitestore/sqlc.yaml
+	migrate -database "sqlite://./kiosk.db" -path "./internal/sqlitestore/migrations" up
 
 
 run:

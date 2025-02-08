@@ -26,19 +26,23 @@ func (api API) PostPrint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mainConfig, err := api.repo.GetFirstConfig(r.Context())
+	rawConfig, err := api.repo.GetFirstConfig(r.Context())
+	mainConfig := ConfigResponse{}.fromConfig(rawConfig)
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, "Config not found", http.StatusBadRequest)
 		return
 	}
-	result, err := imageService.DefaultPrint(mainConfig.TemplateImage.String, body.Title, body.Description, int(mainConfig.PositionX.Int64), int(mainConfig.PositionY.Int64), int(mainConfig.FontSize.Int64))
+	result, err := imageService.DefaultPrint(mainConfig.TemplateImage, body.Title, body.Description, mainConfig.PositionX, mainConfig.PositionY, mainConfig.FontSize)
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, "error getting image", http.StatusBadRequest)
 		return
 	}
 
-	err = imageService.Print(result, mainConfig.Printer.String)
+	err = imageService.Print(result, mainConfig.Printer)
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, "error getting image", http.StatusBadRequest)
 		return
 	}
@@ -49,6 +53,10 @@ func (api API) PostPrint(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Image saved"})
 }
 
+type GetPrintersResponse struct {
+	Printers []string `json:"printers"`
+}
+
 // Create a new config
 // (GET /printers)
 func (api API) GetPrinters(w http.ResponseWriter, r *http.Request) {
@@ -57,10 +65,14 @@ func (api API) GetPrinters(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error getting printers", http.StatusBadRequest)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 
-	json.NewEncoder(w).Encode(names)
+	if err := json.NewEncoder(w).Encode(GetPrintersResponse{Printers: names}); err != nil {
+		println(err.Error())
+		http.Error(w, "error encoding response", http.StatusInternalServerError)
+		return
+	}
 }
 
 // Create a new config

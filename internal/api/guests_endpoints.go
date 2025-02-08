@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -75,16 +76,24 @@ func (api API) GetGuestByDocument(w http.ResponseWriter, r *http.Request) {
 // List guests
 // (GET /guests)
 func (api API) ListGuests(w http.ResponseWriter, r *http.Request) {
-	guests, err := api.repo.ListGuests(r.Context())
+	query := r.URL.Query().Get("q")
+	println("quering", query)
+	if query == "" {
+		http.Error(w, "error finding guests", http.StatusBadRequest)
+		return
+
+	}
+	guests, err := api.repo.GetGuestByDocumentNumber(r.Context(), query)
 	if err != nil {
-		http.Error(w, "error finding guests", http.StatusInternalServerError)
+		http.Error(w, "No result found", http.StatusBadRequest)
 		return
 	}
-
+	fmt.Printf("guests: %+v\n", guests)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(guests); err != nil {
+		println(err.Error())
 		http.Error(w, "error encoding response", http.StatusInternalServerError)
 		return
 	}

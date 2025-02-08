@@ -172,7 +172,12 @@ func Print(filePath string, printerName string) error {
 
 func generateNewName(prefix string, path string) string {
 	newName := path
-	pathParts := strings.Split(path, "/")
+	pathParts := strings.Split(path, "\\")
+	if os.PathSeparator == '\\' {
+		pathParts = strings.Split(path, "\\")
+	} else {
+		pathParts = strings.Split(path, "/")
+	}
 	fileName := pathParts[len(pathParts)-1]
 	newName = strings.Join(append(pathParts[:len(pathParts)-1], prefix+" "+ulid.Make().String()+"-"+fileName), "/")
 	return newName
