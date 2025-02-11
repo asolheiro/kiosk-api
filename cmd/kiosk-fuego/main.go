@@ -9,6 +9,7 @@ import (
 	"github.com/asolheiro/kiosk-api/internal-v2/controller"
 	"github.com/asolheiro/kiosk-api/internal-v2/routers"
 	"github.com/go-fuego/fuego"
+	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	_ "modernc.org/sqlite"
@@ -32,8 +33,13 @@ func main() {
         log.Fatal(err)
     }
     
+	url := os.Getenv("URL")
     s := fuego.NewServer(
-		fuego.WithAddr(":8080"),
+		fuego.WithAddr(url),
+		fuego.WithGlobalMiddlewares(cors.New(cors.Options{
+			AllowedOrigins: []string{"*"},
+			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		}).Handler),
 	)
 	
     
@@ -52,7 +58,7 @@ func main() {
 	
     routers.NewRouter(s, db, logger)
     
-    fmt.Println("Starting server at port 8080...")
+    fmt.Println("Starting server at port 9999...")
 	
 	    if err := s.Run(); err != nil {
         log.Fatal("Server error:", err)

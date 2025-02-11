@@ -3,7 +3,7 @@ services:
     container_name: kiosk
     build: .
     ports: 
-      - "8080:8080"
+      - "9999:9999"
     healthcheck:
       test: ["CMD-SHELL", "curl", "-f", "http://localhost:9999/healthcheck"]
       interval: 10s

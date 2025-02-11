@@ -14,6 +14,7 @@ func UsersRouter(server *fuego.Server, handler controller.APIResources) {
 		option.Summary("Users routes"),
 		option.Description("Default description for all Users routes"),
 		option.Tags("users"),
+
 	)
 
 	fuego.Get(users, "/", handler.GetAllUsers)

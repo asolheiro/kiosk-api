@@ -11,12 +11,12 @@ RUN go mod download &&\
 RUN go build -o ./bin/kiosk ./cmd/kiosk-fuego/main.go
 
 ## Stage: Run
-FROM scratch
+FROM alpine
 
 WORKDIR /app
 
 COPY --from=build /app/bin/kiosk/. .
 
-EXPOSE 8080
+EXPOSE 9999
 
 CMD [ "./kiosk" ]
