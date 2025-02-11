@@ -13,11 +13,13 @@ import (
 
 	"github.com/asolheiro/kiosk-api/internal/api"
 	"github.com/asolheiro/kiosk-api/internal/utils"
+	_ "github.com/asolheiro/kiosk-api/docs"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/phenpessoa/gutils/netutils/httputils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"github.com/swaggo/http-swagger"
 	_ "modernc.org/sqlite"
 )
 
@@ -38,7 +40,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
-	fmt.Println("Goodby...")
+	fmt.Println("Goodbye...")
 }
 
 var ddl string
@@ -68,9 +70,6 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	if err != nil {
-		return err
-	}
 	defer db.Close()
 
 	if err := db.Ping(); err != nil {
@@ -89,9 +88,14 @@ func run(ctx context.Context) error {
 		httputils.ChiLogger(logger),
 	)
 
+
 	r.Route("/", func(r chi.Router) {
 		r.Get("/healthcheck", utils.HealthCheck)
 	})
+
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
 
 	utils.UsersRouter(r, apiInstance)
 	utils.EventsRouter(r, apiInstance)
@@ -99,6 +103,7 @@ func run(ctx context.Context) error {
 	utils.CheckinsRouter(r, apiInstance)
 	utils.ConfigRouter(r, apiInstance)
 	utils.PrintRouter(r, apiInstance)
+
 
 	srv := http.Server{
 		Addr:         ":8080",

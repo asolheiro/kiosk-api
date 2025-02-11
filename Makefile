@@ -28,6 +28,15 @@ generate-sqlite:
 	sqlc generate -f ./internal/sqlitestore/sqlc.yaml
 
 
-run: migrate-up-sqlite
+run: 
+	migrate-up-sqlite
 	@clear
 	@go run cmd/kiosk/kiosk.go
+
+swagger:
+	docker run --rm -v $(shell pwd):/code ghcr.io/swaggo/swag:latest init -g ./cmd/kiosk/kiosk.go
+	rm -f ./docs/docs.json && rm -f ./docs/docs.yaml
+	mv ./docs/swagger.json ./docs/docs.json && mv ./docs/swagger.yaml ./docs/docs.yaml
+	sed -i '' 's|"github.com/swaggo/swag/v2"|"github.com/swaggo/swag"|' ./docs/docs.go
+
+

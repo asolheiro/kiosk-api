@@ -1,0 +1,4 @@
+ALTER TABLE config ADD COLUMN position_x INTEGER;
+ALTER TABLE config ADD COLUMN position_y INTEGER;
+ALTER TABLE config ADD COLUMN font_size INTEGER;
+ALTER TABLE config ADD COLUMN width_limiter INTEGER;

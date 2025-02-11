@@ -9,8 +9,7 @@ import (
 	"github.com/go-chi/chi"
 )
 
-// Create a new user
-// (POST /users)
+
 func (api API) PostUser(w http.ResponseWriter, r *http.Request) {
 	var body sqlitestore.CreateUserParams
 
@@ -31,8 +30,8 @@ func (api API) PostUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-// Get an user
-// (GET /users/{userId})
+
+
 func (api API) GetUser(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "userId")
 	userId := strings.TrimSpace(stringId)
@@ -52,8 +51,15 @@ func (api API) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// List users
-// (GET /users
+// @BasePath /
+// @Summary List all active users.
+// @Description List all active users in database.
+// @Tags user
+// @Produce json
+// @Success 200 {array} sqlitestore.User
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 401 {object} utils.ErrorResponse
+// @Router /users [get]
 func (api API) ListUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := api.repo.ListUsers(r.Context())
 	if err != nil {

@@ -8,7 +8,7 @@ COPY ./ .
 RUN go mod download &&\
     go mod verify 
     
-RUN go build -o ./bin/kiosk ./cmd/kiosk/kiosk.go
+RUN go build -o ./bin/kiosk ./cmd/kiosk-fuego/main.go
 
 ## Stage: Run
 FROM scratch
@@ -19,4 +19,4 @@ COPY --from=build /app/bin/kiosk/. .
 
 EXPOSE 8080
 
-ENTRYPOINT [ "./kiosk" ]
+CMD [ "./kiosk" ]

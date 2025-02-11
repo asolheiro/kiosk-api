@@ -6,7 +6,7 @@ import (
 )
 
 func UsersRouter(r chi.Router, api api.API) {
-	r.Route("/user", func(r chi.Router) {
+	r.Route("/users", func(r chi.Router) {
 		r.Post("/", api.PostUser)
 		r.Get("/", api.ListUsers)
 		r.Get("/{userId}", api.GetUser)
@@ -16,7 +16,7 @@ func UsersRouter(r chi.Router, api api.API) {
 }
 
 func EventsRouter(r chi.Router, api api.API) {
-	r.Route("/event", func(r chi.Router) {
+	r.Route("/events", func(r chi.Router) {
 		r.Post("/", api.PostEvent)
 		r.Get("/", api.ListEvents)
 		r.Get("/{eventId}", api.GetEvent)
@@ -26,7 +26,7 @@ func EventsRouter(r chi.Router, api api.API) {
 }
 
 func GuestsRouter(r chi.Router, api api.API) {
-	r.Route("/guest", func(r chi.Router) {
+	r.Route("/guests", func(r chi.Router) {
 		r.Post("/", api.PostGuest)
 		r.Get("/", api.ListGuests)
 		r.Get("/{guestId}", api.GetGuest)
@@ -37,7 +37,7 @@ func GuestsRouter(r chi.Router, api api.API) {
 }
 
 func CheckinsRouter(r chi.Router, api api.API) {
-	r.Route("/checkin", func(r chi.Router) {
+	r.Route("/checkins", func(r chi.Router) {
 		r.Post("/", api.PostCheckIn)
 		r.Get("/", api.ListCheckIns)
 		r.Get("/{checkInId}", api.GetCheckIn)
@@ -45,13 +45,13 @@ func CheckinsRouter(r chi.Router, api api.API) {
 }
 
 func PrintRouter(r chi.Router, api api.API) {
-	r.Route("/printer", func(r chi.Router) {
+	r.Route("/print", func(r chi.Router) {
 		r.Post("/", api.PostPrint)
 	})
 }
 
 func ConfigRouter(r chi.Router, api api.API) {
-	r.Route("/config", func(r chi.Router) {
+	r.Route("/configs", func(r chi.Router) {
 		r.Get("/", api.GetConfig)
 		r.Put("/{configId}", api.PutConfig)
 		r.Post("/{configId}/import", api.ImportGuestsConfig)
