@@ -8,6 +8,7 @@ import (
 	"image/png"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/godoes/printers"
@@ -16,6 +17,17 @@ import (
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 )
+
+func UserHomeDir() string {
+	if runtime.GOOS == "windows" {
+		home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
+		if home == "" {
+			home = os.Getenv("USERPROFILE")
+		}
+		return home
+	}
+	return os.Getenv("HOME")
+}
 
 func GetTemplateImage(path string) (*image.RGBA, error) {
 	imgFile, err := os.Open(path)
@@ -39,13 +51,13 @@ func UpdateImage(rgba *image.RGBA, x, y int, title string, description string, f
 	fontPath := "ARIALBD.ttf"
 	fontBytes, err := os.ReadFile(fontPath)
 	if err != nil {
-		log.Fatal(err)
+		println(err.Error())
 		return err
 	}
 	// Parse the font
 	drawFont, err := truetype.Parse(fontBytes)
 	if err != nil {
-		log.Fatal(err)
+		println(err.Error())
 		return err
 	}
 
@@ -63,7 +75,7 @@ func UpdateImage(rgba *image.RGBA, x, y int, title string, description string, f
 	}
 
 	// Draw description
-	err = drawText(fnt, rgba, x, y+50, description)
+	err = drawText(fnt, rgba, x, y+20, description)
 	if err != nil {
 		fmt.Printf("error drawing text: %v", err)
 		return err
@@ -85,18 +97,21 @@ func drawText(fnt font.Face, rgba *image.RGBA, x, y int, label string) error {
 	return nil
 }
 
-func SaveImage(rgba *image.RGBA, outputPath string) {
+func SaveImage(rgba *image.RGBA, outputPath string) error {
 	outFile, err := os.Create(outputPath)
 	if err != nil {
-		log.Fatalf("failed to create output file: %v", err)
+		println("failed to create output file:" + err.Error())
+		return err
 	}
 	defer outFile.Close()
 
 	err = png.Encode(outFile, rgba)
 	if err != nil {
-		log.Fatalf("failed to encode image: %v", err)
+		println("failed to encode image:" + err.Error())
+		return err
 	}
 	log.Printf("image saved successfully to %s", outputPath)
+	return nil
 }
 
 func DefaultPrint(path string, title string, description string, x, y, fontZise int) (string, error) {
@@ -110,15 +125,11 @@ func DefaultPrint(path string, title string, description string, x, y, fontZise 
 		return "", err
 	}
 
-	if _, err := os.Stat("./temp"); os.IsNotExist(err) {
-		err = os.Mkdir("./temp", os.ModePerm)
-		if err != nil {
-			return "", fmt.Errorf("failed to create temp directory: %v", err)
-		}
-	}
-
 	finalPath := generateNewName("v1", path)
-	SaveImage(image, finalPath)
+	err = SaveImage(image, finalPath)
+	if err != nil {
+		return "", err
+	}
 
 	return finalPath, nil
 }
@@ -132,7 +143,7 @@ func Print(filePath string, printerName string) error {
 	// Read file data
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		log.Fatal(err)
+		println(err.Error())
 	}
 
 	p, err := printers.Open(printerName)
@@ -146,29 +157,34 @@ func Print(filePath string, printerName string) error {
 	println("Printer opened")
 	err = p.StartDocument("Print Job", "RAW")
 	if err != nil {
-		log.Fatal(err)
+		println(err.Error())
+		return err
 	}
 	println("Document started")
 	err = p.StartPage()
 	if err != nil {
-		log.Fatal(err)
+		println(err.Error())
+		return err
 	}
 
 	println("Page started")
 	_, err = p.Write(data)
 	if err != nil {
-		log.Fatal(err)
+		println(err.Error())
+		return err
 	}
 
 	err = p.EndPage()
 	if err != nil {
-		log.Fatal(err)
+		println(err.Error())
+		return err
 	}
 
 	println("Page ended")
 	err = p.EndDocument()
 	if err != nil {
-		log.Fatal(err)
+		println(err.Error())
+		return err
 	}
 
 	println("Document ended")
@@ -178,8 +194,10 @@ func Print(filePath string, printerName string) error {
 }
 
 func generateNewName(prefix string, path string) string {
+	homeDir := UserHomeDir()
+	dbDir := homeDir + "\\AppData\\Local\\Kiosk"
 	pathParts := strings.Split(path, string(os.PathSeparator))
 	fileName := pathParts[len(pathParts)-1]
-	newName := fmt.Sprintf("./temp/%s-%s-%s", prefix, ulid.Make().String(), fileName)
+	newName := fmt.Sprintf(dbDir+"/%s-%s-%s", prefix, ulid.Make().String(), fileName)
 	return newName
 }

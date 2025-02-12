@@ -311,8 +311,9 @@ SELECT
     id, template_image, printer, orientation, updated_at, position_x, position_y, font_size, width_limiter 
 FROM 
     config
+ORDER BY created_at DESC
 LIMIT 
-    1
+    1;
 `
 
 func (q *Queries) GetFirstConfig(ctx context.Context) (Config, error) {

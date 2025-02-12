@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/asolheiro/kiosk-api/internal/imageService"
@@ -21,7 +20,7 @@ func (api API) PostPrint(w http.ResponseWriter, r *http.Request) {
 	var body PostPrintParams
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		fmt.Println(err)
+		println(err.Error())
 		http.Error(w, "error deconding JSON", http.StatusBadRequest)
 		return
 	}
@@ -29,20 +28,20 @@ func (api API) PostPrint(w http.ResponseWriter, r *http.Request) {
 	rawConfig, err := api.repo.GetFirstConfig(r.Context())
 	mainConfig := ConfigResponse{}.fromConfig(rawConfig)
 	if err != nil {
-		fmt.Println(err)
+		println(err.Error())
 		http.Error(w, "Config not found", http.StatusBadRequest)
 		return
 	}
 	result, err := imageService.DefaultPrint(mainConfig.TemplateImage, body.Title, body.Description, mainConfig.PositionX, mainConfig.PositionY, mainConfig.FontSize)
 	if err != nil {
-		fmt.Println(err)
+		println(err.Error())
 		http.Error(w, "error getting image", http.StatusBadRequest)
 		return
 	}
 
 	err = imageService.Print(result, mainConfig.Printer)
 	if err != nil {
-		fmt.Println(err)
+		println(err.Error())
 		http.Error(w, "error getting image", http.StatusBadRequest)
 		return
 	}

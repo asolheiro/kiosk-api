@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 	"time"
 
 	"github.com/asolheiro/kiosk-api/internal/api"
+	"github.com/asolheiro/kiosk-api/internal/imageService"
 	"github.com/asolheiro/kiosk-api/internal/utils"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -44,16 +44,6 @@ func main() {
 
 var ddl string
 
-func UserHomeDir() string {
-	if runtime.GOOS == "windows" {
-		home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
-		if home == "" {
-			home = os.Getenv("USERPROFILE")
-		}
-		return home
-	}
-	return os.Getenv("HOME")
-}
 func run(ctx context.Context) error {
 	cfg := zap.NewDevelopmentConfig()
 	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -66,7 +56,7 @@ func run(ctx context.Context) error {
 	logger = logger.Named("kiosk-api")
 	defer func() { _ = logger.Sync() }()
 
-	homeDir := UserHomeDir()
+	homeDir := imageService.UserHomeDir()
 	dbDir := homeDir + "\\AppData\\Local\\Kiosk"
 	if err := os.MkdirAll(dbDir, os.ModePerm); err != nil {
 		return err
