@@ -25,3 +25,5 @@ go.work.sum
 .env
 
 temp/*
+bin/*
+kiosk.db

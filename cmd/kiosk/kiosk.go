@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -43,6 +44,16 @@ func main() {
 
 var ddl string
 
+func UserHomeDir() string {
+	if runtime.GOOS == "windows" {
+		home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
+		if home == "" {
+			home = os.Getenv("USERPROFILE")
+		}
+		return home
+	}
+	return os.Getenv("HOME")
+}
 func run(ctx context.Context) error {
 	cfg := zap.NewDevelopmentConfig()
 	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -55,10 +66,13 @@ func run(ctx context.Context) error {
 	logger = logger.Named("kiosk-api")
 	defer func() { _ = logger.Sync() }()
 
-	dbPath := os.Getenv("SQLITE_DB_PATH")
-	if dbPath == "" {
-		dbPath = "./kiosk.db"
+	homeDir := UserHomeDir()
+	dbDir := homeDir + "\\AppData\\Local\\Kiosk"
+	if err := os.MkdirAll(dbDir, os.ModePerm); err != nil {
+		return err
 	}
+	dbPath := dbDir + "\\kiosk.db"
+	println("Database path: ", dbPath)
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return err
