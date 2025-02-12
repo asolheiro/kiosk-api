@@ -32,7 +32,7 @@ func (api API) PostPrint(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Config not found", http.StatusBadRequest)
 		return
 	}
-	result, err := imageService.DefaultPrint(mainConfig.TemplateImage, body.Title, body.Description, mainConfig.PositionX, mainConfig.PositionY, mainConfig.FontSize)
+	result, err := imageService.DefaultPrint(mainConfig.TemplateImage, body.Title, body.Description, mainConfig.PositionX, mainConfig.PositionY, mainConfig.FontSize, mainConfig.WidthLimiter)
 	if err != nil {
 		println(err.Error())
 		http.Error(w, "error getting image", http.StatusBadRequest)

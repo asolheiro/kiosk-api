@@ -8,15 +8,52 @@ import (
 	"image/png"
 	"log"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 
-	"github.com/godoes/printers"
-	"github.com/golang/freetype/truetype"
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/math/fixed"
 )
+
+func maxCharsThatFit(text string, face font.Face, maxWidth int) int {
+	d := &font.Drawer{
+		Face: face,
+	}
+
+	for i := 1; i <= len(text); i++ {
+		width := d.MeasureString(text[:i])
+		if width.Ceil() > maxWidth {
+			return i - 1
+		}
+	}
+	return len(text)
+}
+
+func loadFont(fontPath string, fontSize float64) (font.Face, error) {
+	fontBytes, err := os.ReadFile(fontPath)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedFont, err := opentype.Parse(fontBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	face, err := opentype.NewFace(parsedFont, &opentype.FaceOptions{
+		Size:    fontSize,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return face, nil
+}
 
 func UserHomeDir() string {
 	if runtime.GOOS == "windows" {
@@ -47,35 +84,27 @@ func GetTemplateImage(path string) (*image.RGBA, error) {
 	return rgba, nil
 }
 
-func UpdateImage(rgba *image.RGBA, x, y int, title string, description string, fontZise int) error {
+func parseTextToPrinter(text string, face font.Face, maxWidth int) string {
+	maxCharLimiter := maxCharsThatFit(text, face, maxWidth)
+
+	return text[:maxCharLimiter]
+
+}
+
+func UpdateImage(rgba *image.RGBA, x, y int, title string, description string, fontZise int, maxWidth int) error {
 	fontPath := "ARIALBD.ttf"
-	fontBytes, err := os.ReadFile(fontPath)
-	if err != nil {
-		println(err.Error())
-		return err
-	}
-	// Parse the font
-	drawFont, err := truetype.Parse(fontBytes)
-	if err != nil {
-		println(err.Error())
-		return err
-	}
+	face, err := loadFont(fontPath, float64(fontZise))
 
-	// Create the font drawer
-	fnt := truetype.NewFace(drawFont, &truetype.Options{
-		Size:    float64(fontZise),
-		DPI:     72,
-		Hinting: font.HintingFull,
-	})
-
-	err = drawText(fnt, rgba, x, y, title)
+	parsedTitle := parseTextToPrinter(title, face, maxWidth)
+	err = drawText(face, rgba, x, y, parsedTitle)
 	if err != nil {
 		fmt.Printf("error drawing text: %v", err)
 		return err
 	}
 
 	// Draw description
-	err = drawText(fnt, rgba, x, y+20, description)
+	parsedDescription := parseTextToPrinter(description, face, maxWidth)
+	err = drawText(face, rgba, x, y+20, parsedDescription)
 	if err != nil {
 		fmt.Printf("error drawing text: %v", err)
 		return err
@@ -114,12 +143,12 @@ func SaveImage(rgba *image.RGBA, outputPath string) error {
 	return nil
 }
 
-func DefaultPrint(path string, title string, description string, x, y, fontZise int) (string, error) {
+func DefaultPrint(path string, title string, description string, x, y, fontZise, widthLimit int) (string, error) {
 	image, err := GetTemplateImage(path)
 	if err != nil {
 		return "", err
 	}
-	err = UpdateImage(image, x, y, title, description, fontZise)
+	err = UpdateImage(image, x, y, title, description, fontZise, widthLimit)
 	if err != nil {
 
 		return "", err
@@ -134,60 +163,36 @@ func DefaultPrint(path string, title string, description string, x, y, fontZise 
 	return finalPath, nil
 }
 
+func sendToPrinter(filePath string, printerName string) error {
+	// Use the `print` command on Windows to send the file to the default printer
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("print", "/D:"+"\""+printerName+"\"", filePath)
+	} else {
+		cmd = exec.Command("lp", "-d "+"\""+printerName+"\"", filePath)
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to print: %v, output: %s", err, output)
+	}
+
+	fmt.Println("Print job sent successfully")
+	return nil
+}
+
 func Print(filePath string, printerName string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-	// Read file data
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		println(err.Error())
-	}
+	file.Close()
 
-	p, err := printers.Open(printerName)
+	err = sendToPrinter(filePath, printerName)
 	if err != nil {
+		fmt.Println(err.Error())
 		return err
 	}
-
-	defer func() {
-		_ = p.Close()
-	}()
-	println("Printer opened")
-	err = p.StartDocument("Print Job", "RAW")
-	if err != nil {
-		println(err.Error())
-		return err
-	}
-	println("Document started")
-	err = p.StartPage()
-	if err != nil {
-		println(err.Error())
-		return err
-	}
-
-	println("Page started")
-	_, err = p.Write(data)
-	if err != nil {
-		println(err.Error())
-		return err
-	}
-
-	err = p.EndPage()
-	if err != nil {
-		println(err.Error())
-		return err
-	}
-
-	println("Page ended")
-	err = p.EndDocument()
-	if err != nil {
-		println(err.Error())
-		return err
-	}
-
-	println("Document ended")
 	log.Println("Print job sent successfully")
 	return nil
 
