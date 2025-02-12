@@ -1,7 +1,9 @@
 services:
   kiosk:
     container_name: kiosk
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports: 
       - "9999:9999"
     healthcheck:

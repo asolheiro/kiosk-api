@@ -13,7 +13,6 @@ import (
 
 	"github.com/asolheiro/kiosk-api/internal/api"
 	"github.com/asolheiro/kiosk-api/internal/utils"
-	_ "github.com/asolheiro/kiosk-api/docs"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/phenpessoa/gutils/netutils/httputils"
@@ -48,7 +47,7 @@ var ddl string
 func run(ctx context.Context) error {
 	cfg := zap.NewDevelopmentConfig()
 	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-
+	
 	logger, err := cfg.Build()
 	if err != nil {
 		return err
