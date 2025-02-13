@@ -167,7 +167,7 @@ func sendToPrinter(filePath string, printerName string) error {
 	// Use the `print` command on Windows to send the file to the default printer
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("print", "/D:"+"\""+printerName+"\"", filePath)
+		cmd = exec.Command("mspaint", "/pt", filePath, printerName)
 	} else {
 		cmd = exec.Command("lp", "-d "+"\""+printerName+"\"", filePath)
 	}
