@@ -23,7 +23,7 @@ func (h *ZapHandler) Handle(ctx context.Context, r slog.Record) error {
 	case r.Level >= slog.LevelError:
 		level = zapcore.ErrorLevel
 	case r.Level >= slog.LevelWarn:
-		level = zapcore.WarnLevel
+		level = zapcore.InfoLevel
 	case r.Level >= slog.LevelInfo:
 		level = zapcore.InfoLevel
 	default:
@@ -58,7 +58,7 @@ func (h *ZapHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	case level >= slog.LevelError:
 		zapLevel = zapcore.ErrorLevel
 	case level >= slog.LevelWarn:
-		zapLevel = zapcore.WarnLevel
+		zapLevel = zapcore.InfoLevel
 	case level >= slog.LevelInfo:
 		zapLevel = zapcore.InfoLevel
 	default:

@@ -3,6 +3,7 @@ module github.com/asolheiro/kiosk-api
 go 1.23.4
 
 require (
+	github.com/getkin/kin-openapi v0.129.0
 	github.com/go-chi/chi v1.5.5
 	github.com/go-fuego/fuego v0.18.0
 	github.com/go-playground/validator/v10 v10.24.0
@@ -12,7 +13,6 @@ require (
 	github.com/phenpessoa/gutils v0.0.0-20240130030144-d391b9329afd
 	github.com/rs/cors v1.11.1
 	github.com/swaggo/http-swagger v1.3.4
-	github.com/swaggo/swag v1.16.4
 	go.uber.org/zap v1.27.0
 	golang.org/x/image v0.23.0
 	modernc.org/sqlite v1.34.5
@@ -21,7 +21,6 @@ require (
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/getkin/kin-openapi v0.129.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/spec v0.21.0 // indirect
@@ -37,6 +36,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
+	github.com/swaggo/swag v1.16.4 // indirect
 	golang.org/x/tools v0.29.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

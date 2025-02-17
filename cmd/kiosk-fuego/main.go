@@ -7,8 +7,6 @@ import (
 	"log"
 	"log/slog"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/asolheiro/kiosk-api/internal-v2/controller"
 	"github.com/asolheiro/kiosk-api/internal-v2/logging"
@@ -25,14 +23,6 @@ func main() {
     fmt.Println("Starting kiosk-api...")
     
 	ctx := context.Background()
-	ctx, cancel := signal.NotifyContext(
-		ctx,
-		os.Interrupt,
-		os.Kill,
-		syscall.SIGTERM,
-		syscall.SIGKILL,
-	)
-	defer cancel()
 
 	if err := run(ctx); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
@@ -43,7 +33,7 @@ func main() {
     fmt.Println("Goodbye...")
 }
 
-var ddl string
+
 func run(ctx context.Context) error {
 	cfg := zap.NewDevelopmentConfig()
 	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -70,6 +60,7 @@ func run(ctx context.Context) error {
     }
 	defer db.Close()
 
+	var ddl string
 	if _, err := db.ExecContext(ctx, ddl); err != nil {
 		return err
 	}
@@ -78,9 +69,9 @@ func run(ctx context.Context) error {
         log.Fatal(err)
     }
     
-	
+	addr := fmt.Sprintf("%s:%s", os.Getenv("URL"), os.Getenv("PORT"))
     s := fuego.NewServer(
-		fuego.WithAddr(os.Getenv("URL")),
+		fuego.WithAddr(addr),
 		fuego.WithLogHandler(slogHandler.Handler()),
 		fuego.WithGlobalMiddlewares(
 			cors.New(cors.Options{
@@ -89,7 +80,8 @@ func run(ctx context.Context) error {
 			}).Handler,
 		),
 	)
-	infoAPI(s)
+
+	_ = infoAPI(s)
 
 	fuego.Get(s, "/healthcheck", controller.HealthCheck)
 	
@@ -99,7 +91,7 @@ func run(ctx context.Context) error {
 	
     routers.NewRouter(s, db, logger)
     
-    fmt.Println("Starting server at port 9999...")
+    fmt.Printf("Starting server at port %s...", os.Getenv("PORT"))
 	
 	    if err := s.Run(); err != nil {
         log.Fatal("Server error:", err)
@@ -107,19 +99,22 @@ func run(ctx context.Context) error {
    return nil 
 }
 
-func infoAPI(s *fuego.Server) {
-	url := os.Getenv(os.Getenv("URL"))
+func infoAPI(s *fuego.Server) error {
+	url := fmt.Sprintf("http://%s:%v", os.Getenv("URL"), os.Getenv("PORT"))
 
 	s.OpenAPI.Description().Servers = append(
 		s.OpenAPI.Description().Servers, 
 		&openapi3.Server{
-			URL: fmt.Sprintf("http://%v", url),
+			URL: url,
 			Description: "Test server",
 	})
+
 	s.OpenAPI.Description().Info.Title = "Kiosk API"
 	s.OpenAPI.Description().Info.Contact = &openapi3.Contact{
 		Name: "Armando Solheiro",
 		Email: "avgsolheiro@gmail.com",
 		URL: "https//github.com/asolheiro",
 	}
+	s.OpenAPI.Description().Info.Version = "v2.0.0"
+	return nil
 }
