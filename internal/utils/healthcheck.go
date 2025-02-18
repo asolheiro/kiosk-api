@@ -5,11 +5,11 @@ import (
 	"net/http"
 )
 
-func HealthCheck (w http.ResponseWriter, r *http.Request) {
+func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	healthy := map[string]string{
 		"status": "healthy",
 	}
-	
+
 	jsonData, err := json.Marshal(healthy)
 	if err != nil {
 		http.Error(w, "error encoding json", http.StatusInternalServerError)

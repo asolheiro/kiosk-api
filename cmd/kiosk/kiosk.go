@@ -16,9 +16,9 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/phenpessoa/gutils/netutils/httputils"
+	"github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"github.com/swaggo/http-swagger"
 	_ "modernc.org/sqlite"
 )
 
@@ -47,7 +47,7 @@ var ddl string
 func run(ctx context.Context) error {
 	cfg := zap.NewDevelopmentConfig()
 	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	
+
 	logger, err := cfg.Build()
 	if err != nil {
 		return err
@@ -87,7 +87,6 @@ func run(ctx context.Context) error {
 		httputils.ChiLogger(logger),
 	)
 
-
 	r.Route("/", func(r chi.Router) {
 		r.Get("/healthcheck", utils.HealthCheck)
 	})
@@ -102,7 +101,6 @@ func run(ctx context.Context) error {
 	utils.CheckinsRouter(r, apiInstance)
 	utils.ConfigRouter(r, apiInstance)
 	utils.PrintRouter(r, apiInstance)
-
 
 	srv := http.Server{
 		Addr:         ":8080",

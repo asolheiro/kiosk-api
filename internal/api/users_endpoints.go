@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi"
 )
 
-
 func (api API) PostUser(w http.ResponseWriter, r *http.Request) {
 	var body sqlitestore.CreateUserParams
 
@@ -29,8 +28,6 @@ func (api API) PostUser(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(user)
 }
-
-
 
 func (api API) GetUser(w http.ResponseWriter, r *http.Request) {
 	stringId := chi.URLParam(r, "userId")

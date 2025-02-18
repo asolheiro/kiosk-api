@@ -25,4 +25,3 @@ func NewSQliteAPI(db *sql.DB, logger *zap.Logger) API {
 		db,
 	}
 }
-

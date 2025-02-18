@@ -8,8 +8,8 @@ import (
 )
 
 type APIResources struct {
-	pool *sql.DB
-	repo *sqlitestore.Queries
+	pool   *sql.DB
+	repo   *sqlitestore.Queries
 	logger *zap.Logger
 }
 
@@ -20,4 +20,3 @@ func NewResource(db *sql.DB, logger *zap.Logger) *APIResources {
 		logger,
 	}
 }
-

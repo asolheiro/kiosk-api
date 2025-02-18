@@ -12,4 +12,5 @@ func NewRouter(server *fuego.Server, db *sql.DB, logger *zap.Logger) {
 	resources := controller.NewResource(db, logger)
 
 	UsersRouter(server, *resources)
+	EventsRouter(server, *resources)
 }

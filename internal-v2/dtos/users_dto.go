@@ -15,7 +15,6 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at" openapi:"desc=Creation timestamp"`
 }
 
-// Convert from sqlc model to DTO
 func FromSQLCUser(u sqlitestore.User) User {
 	return User{
 		ID:        u.ID,
@@ -37,10 +36,8 @@ type UserResponse struct {
 	FullName  string    `json:"name" desc:"Users name"`
 	Email     string    `json:"email" desc:"Users email"`
 	CreatedAt time.Time `json:"created_at" desc:"Creation timestamp"`
-	// Add other fields you want to expose
 }
 
-// NewUserResponse creates a UserResponse from a sqlitestore.User
 func NewUserResponse(u sqlitestore.User) UserResponse {
 	return UserResponse{
 		ID:        u.ID,
@@ -50,7 +47,6 @@ func NewUserResponse(u sqlitestore.User) UserResponse {
 	}
 }
 
-// NewUserResponseList creates a slice of UserResponse from a slice of sqlitestore.User
 func NewUserResponseList(users []sqlitestore.User) []UserResponse {
 	result := make([]UserResponse, len(users))
 	for i, u := range users {
