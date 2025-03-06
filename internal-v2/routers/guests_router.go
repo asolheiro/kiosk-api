@@ -38,7 +38,7 @@ func GuestRouter(server *fuego.Server, handler controller.APIResources) {
 		option.Summary("Update a guest"),
 		option.Description("Update a guest with the given parameters"),
 	)
-	fuego.Delete(guest, "{guestId}", handler.DeleteGuest,
+	fuego.Delete(guest, "/{guestId}", handler.DeleteGuest,
 		option.Summary("Delete a event"),
 		option.Description("Soft delete a event"),)
 }
